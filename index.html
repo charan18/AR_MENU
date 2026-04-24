@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Smart Menu</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 antialiased text-gray-900">
+
+    <div class="max-w-md mx-auto p-6 min-h-screen">
+        <header class="mb-10 text-center">
+            <h1 id="res-name" class="text-3xl font-black uppercase tracking-tighter text-gray-800">Menu</h1>
+            <div class="h-1 w-12 bg-orange-500 mx-auto mt-2 rounded-full"></div>
+        </header>
+
+        <div id="menu-container" class="space-y-8">
+            </div>
+    </div>
+
+    <script>
+        async function initMenu() {
+            try {
+                const res = await fetch('data.json');
+                const data = await res.json();
+                document.getElementById('res-name').innerText = data.restaurant;
+
+                const container = document.getElementById('menu-container');
+                data.dishes.forEach(dish => {
+                    container.innerHTML += `
+                        <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 p-2 border border-gray-100">
+                            <model-viewer 
+                                src="${dish.glb}" 
+                                ios-src="${dish.usdz}"
+                                ar ar-modes="webxr scene-viewer quick-look" 
+                                camera-controls 
+                                shadow-intensity="1.5"
+                                shadow-softness="1"
+                                environment-image="neutral"
+                                auto-rotate
+                                class="w-full h-72 bg-gray-50 rounded-[1.8rem]">
+                                <button slot="ar-button" class="absolute bottom-4 right-4 bg-orange-500 text-white px-6 py-2 rounded-full font-bold shadow-lg active:scale-95 transition-transform">
+                                    VIEW ON TABLE
+                                </button>
+                            </model-viewer>
+
+                            <div class="p-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h2 class="text-2xl font-bold italic">${dish.name}</h2>
+                                    <span class="text-xl font-bold text-orange-600">${data.currency}${dish.price}</span>
+                                </div>
+                                <div class="flex gap-4 text-xs font-medium text-gray-400 mb-4">
+                                    <span>🔥 ${dish.calories}</span>
+                                    <span>💪 ${dish.protein}</span>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-xl text-[10px] text-gray-400 leading-tight uppercase tracking-widest">
+                                    Allergens: ${dish.allergens}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error("Menu failed to load:", e);
+            }
+        }
+        initMenu();
+    </script>
+</body>
+</html>

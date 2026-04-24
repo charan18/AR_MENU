@@ -1,0 +1,16 @@
+{
+  "restaurant": "The Smart AR Cafe",
+  "currency": "£",
+  "dishes": [
+    {
+      "id": "dish_1",
+      "name": "Signature Burger",
+      "price": "12.50",
+      "calories": "820 kcal",
+      "protein": "34g",
+      "allergens": "Gluten, Seeds",
+      "glb": "models/burger.glb",
+      "usdz": "models/burger.usdz"
+    }
+  ]
+}
