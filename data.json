@@ -4,13 +4,36 @@
   "dishes": [
     {
       "id": "dish_1",
-      "name": "Signature Burger",
-      "price": "12.50",
+      "name": "Wagyu Burger",
+      "price": "14.50",
       "calories": "820 kcal",
       "protein": "34g",
-      "allergens": "Gluten, Seeds",
+      "allergens": "Gluten, Dairy",
       "glb": "models/burger.glb",
-      "usdz": "models/burger.usdz"
+      "usdz": "models/burger.usdz",
+      "type": "non-veg"
+    },
+    {
+      "id": "dish_2",
+      "name": "Pepperoni Pizza",
+      "price": "12.00",
+      "calories": "950 kcal",
+      "protein": "28g",
+      "allergens": "Gluten, Pork",
+      "glb": "models/pizza.glb",
+      "usdz": "models/pizza.usdz",
+      "type": "non-veg"
+    },
+    {
+      "id": "dish_3",
+      "name": "Chocolate Croissant",
+      "price": "4.50",
+      "calories": "350 kcal",
+      "protein": "6g",
+      "allergens": "Gluten, Eggs",
+      "glb": "models/croissant.glb",
+      "usdz": "models/croissant.usdz",
+      "type": "veg"
     }
   ]
 }
