@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart AR Menu | Final v1.0</title>
+    <title>Smart AR Menu | Final Pilot</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Hides the default ugly AR button so we can use our custom one */
         model-viewer::part(default-ar-button) { display: none; }
         .hidden { display: none !important; }
     </style>
@@ -18,7 +19,7 @@
             <img src="https://modelviewer.dev/shared-assets/icons/hand.png" class="w-16 mb-6 animate-bounce opacity-80 mx-auto">
             <h2 id="overlay-title" class="text-2xl font-bold mb-3 tracking-tight uppercase italic">Place Your Dish</h2>
             <p id="overlay-text" class="text-zinc-400 text-sm max-w-[280px] leading-relaxed mx-auto">
-                Point your camera at the table and <span class="text-white font-bold">move slowly for 2–3 seconds</span> until the dish appears.
+                Point your camera at the table and <span class="text-white font-bold">move slowly</span> until the dish appears.
             </p>
             <div id="overlay-actions" class="mt-10">
                 <button id="start-button" onclick="startAR()" class="bg-white text-black px-12 py-4 rounded-full font-black uppercase text-xs tracking-widest active:scale-95 transition-transform">
@@ -33,15 +34,17 @@
 
     <div id="ar-loading" class="hidden fixed inset-0 bg-black/80 z-[600] flex flex-col items-center justify-center text-white">
         <div class="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-        <p id="loading-status" class="text-[10px] font-bold uppercase tracking-[0.2em]">Initialising...</p>
+        <p id="loading-status" class="text-[10px] font-bold uppercase tracking-[0.2em]">Opening Camera...</p>
     </div>
 
     <div class="max-w-md mx-auto p-4 min-h-screen">
         <header class="py-12 text-center">
-            <h1 id="res-name" class="text-4xl font-black italic uppercase tracking-tighter text-zinc-800 tracking-widest">Menu</h1>
-            <div class="h-1 w-12 bg-orange-500 mx-auto mt-2"></div>
+            <h1 id="res-name" class="text-4xl font-black italic uppercase tracking-tighter text-zinc-800 tracking-widest underline decoration-orange-500 underline-offset-8">AR MENU</h1>
+            <p class="text-[10px] font-bold text-zinc-400 mt-4 uppercase tracking-[0.3em]">Interactive Experience</p>
         </header>
-        <div id="menu-container" class="space-y-12 pb-24"></div>
+
+        <div id="menu-container" class="space-y-12 pb-24">
+            </div>
     </div>
 
     <script>
@@ -57,14 +60,13 @@
             event.stopPropagation();
             currentViewer = buttonElement.closest('model-viewer');
             
-            // Reset overlay to instruction mode
+            // Set overlay to instruction mode
             document.getElementById('overlay-title').innerText = "Place Your Dish";
-            document.getElementById('overlay-text').innerHTML = 'Point your camera at the table and <span class="text-white font-bold">move slowly for 2–3 seconds</span> until the dish appears.';
+            document.getElementById('overlay-text').innerHTML = 'Point your camera at the table and <span class="text-white font-bold">move slowly</span> until the dish appears.';
             document.getElementById('start-button').classList.remove('hidden');
             document.getElementById('close-button').classList.add('hidden');
             
             document.getElementById('ar-overlay').classList.remove('hidden');
-            document.getElementById('ar-overlay').style.display = 'flex';
         }
 
         function startAR() {
@@ -73,7 +75,6 @@
             const statusText = document.getElementById('loading-status');
 
             loading.classList.remove('hidden');
-            loading.style.display = 'flex';
             statusText.innerText = "Opening Camera...";
 
             if (currentViewer && typeof currentViewer.activateAR === "function") {
@@ -86,7 +87,6 @@
         function showError(msg) {
             document.getElementById('ar-loading').classList.add('hidden');
             document.getElementById('ar-overlay').classList.remove('hidden');
-            document.getElementById('ar-overlay').style.display = 'flex';
             document.getElementById('overlay-title').innerText = "Notice";
             document.getElementById('overlay-text').innerText = msg;
             document.getElementById('start-button').classList.add('hidden');
@@ -95,6 +95,7 @@
 
         async function init() {
             try {
+                // Ensure your data.json is in the same folder
                 const res = await fetch('data.json');
                 const data = await res.json();
                 document.getElementById('res-name').innerText = data.restaurant;
@@ -108,18 +109,25 @@
                     dishCard.innerHTML = `
                         <model-viewer 
                             src="${baseUrl}${dish.glb}" 
-                            ios-src="${baseUrl}${dish.usdz}#allowsContentScaling=0"
+                            ios-src="${baseUrl}${dish.usdz}"
                             ar ar-modes="quick-look webxr" ar-placement="auto"
-                            camera-controls shadow-intensity="1"
+                            ar-scale="auto"
+                            camera-controls 
+                            shadow-intensity="1.5"
+                            shadow-softness="1"
+                            exposure="1"
+                            environment-image="neutral"
                             class="w-full h-96 bg-zinc-50">
+                            
                             <button slot="ar-button" class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-10 py-4 rounded-full font-black text-xs uppercase tracking-widest z-50">
-                                View in Space
+                                View on Table
                             </button>
                         </model-viewer>
+
                         <div class="p-8 text-center">
                             <h2 class="text-2xl font-bold uppercase italic">${dish.name}</h2>
                             <p class="text-orange-600 font-black text-xl mt-1">${data.currency}${dish.price}</p>
-                            <p class="text-[10px] text-zinc-400 mt-4 uppercase tracking-tighter italic">Tap above to rotate & zoom</p>
+                            <p class="text-[10px] text-zinc-400 mt-4 uppercase tracking-tighter italic">Tap burger to rotate & zoom</p>
                         </div>
                     `;
 
@@ -128,19 +136,20 @@
                     
                     arBtn.addEventListener('click', (e) => openGuide(e, arBtn));
 
+                    // Listen for AR session status
                     viewer.addEventListener('ar-status', (event) => {
                         const statusText = document.getElementById('loading-status');
                         const loading = document.getElementById('ar-loading');
 
                         if (event.detail.status === 'session-started') {
                             statusText.innerText = "Placing Dish...";
+                            // Perception fix: stay visible for a blink so user doesn't see white flash
                             setTimeout(() => loading.classList.add('hidden'), 300);
                         }
 
                         if (event.detail.status === 'failed' || event.detail.status === 'not-presenting') {
                             loading.classList.add('hidden');
-                            if (event.detail.status === 'failed') showError("Camera access was denied or failed.");
-                            currentViewer = null;
+                            if (event.detail.status === 'failed') showError("Camera access was denied.");
                         }
                     });
 
