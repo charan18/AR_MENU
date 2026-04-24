@@ -3,30 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart AR Menu</title>
+    <title>Smart AR Menu | Pro Version</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* This ensures the AR button is visible and styled properly */
-        model-viewer::part(default-ar-button) {
-            display: none; /* We use our own button below */
+        /* This hides the default AR button so we can use our custom one */
+        model-viewer::part(default-ar-button) { display: none; }
+        
+        /* Custom prompt for better user guidance */
+        #ar-prompt {
+            position: absolute;
+            bottom: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: none;
         }
+        model-viewer[ar-status="session-started"] > #ar-prompt { display: block; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-zinc-50 text-zinc-900">
 
     <div class="max-w-md mx-auto p-4 min-h-screen">
-        <header class="py-6 text-center">
-            <h1 id="res-name" class="text-3xl font-black uppercase tracking-tighter">AR Menu</h1>
-            <p class="text-gray-400 text-xs">If AR doesn't open, ensure Chrome/Safari is updated.</p>
+        <header class="py-8 text-center">
+            <h1 id="res-name" class="text-4xl font-black italic tracking-tighter uppercase text-zinc-800">Smart Menu</h1>
+            <div class="flex items-center justify-center gap-2 mt-2">
+                <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                <p class="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Life-Size 1:1 AR Enabled</p>
+            </div>
         </header>
 
-        <div id="menu-container" class="space-y-10">
-            </div>
+        <div id="menu-container" class="space-y-12 pb-20"></div>
     </div>
 
     <script>
-        // CRITICAL: Get the absolute base URL of your site
         const baseUrl = window.location.href.split('index.html')[0];
 
         async function init() {
@@ -37,46 +47,52 @@
 
                 const container = document.getElementById('menu-container');
                 data.dishes.forEach(dish => {
-                    // We build the FULL path for Android Chrome's 'Intent' system
                     const fullGlbPath = `${baseUrl}${dish.glb}`;
                     const fullUsdzPath = `${baseUrl}${dish.usdz}`;
 
                     container.innerHTML += `
-                        <div class="bg-white rounded-[2rem] shadow-2xl shadow-gray-200/50 p-2 border border-gray-100 overflow-hidden">
+                        <div class="bg-white rounded-[2.5rem] shadow-xl shadow-zinc-200/50 border border-zinc-100 overflow-hidden">
                             <model-viewer 
                                 src="${fullGlbPath}" 
                                 ios-src="${fullUsdzPath}"
                                 ar 
-                                ar-modes="scene-viewer webxr quick-look" 
+                                ar-modes="webxr scene-viewer quick-look" 
+                                ar-placement="floor"
                                 ar-scale="fixed"
+                                disable-zoom
                                 camera-controls 
                                 touch-action="pan-y"
-                                shadow-intensity="1.5"
+                                shadow-intensity="2" 
+                                shadow-softness="1"
                                 environment-image="neutral"
+                                exposure="1.2"
                                 auto-rotate
-                                class="w-full h-80 bg-gray-50 rounded-[1.8rem]">
+                                class="w-full h-96 bg-zinc-50">
                                 
-                                <button slot="ar-button" class="absolute bottom-6 right-6 bg-orange-600 text-white px-8 py-3 rounded-full font-black text-xs shadow-2xl active:scale-95 transition-all uppercase tracking-widest z-50">
-                                    View in your space
+                                <button slot="ar-button" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-10 py-4 rounded-2xl font-black text-xs shadow-2xl active:scale-95 transition-all uppercase tracking-widest z-50">
+                                    Place on Table
                                 </button>
 
-                                <div slot="progress-bar" class="w-full h-1 bg-gray-100">
-                                    <div class="h-full bg-orange-500 transition-all"></div>
+                                <div id="ar-prompt">
+                                    <img src="https://modelviewer.dev/shared-assets/icons/hand.png" class="w-12 opacity-50 animate-bounce">
                                 </div>
                             </model-viewer>
 
-                            <div class="p-6">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h2 class="text-2xl font-bold italic">${dish.name}</h2>
-                                    <span class="text-xl font-bold text-orange-600">${data.currency}${dish.price}</span>
+                            <div class="p-8">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h2 class="text-3xl font-bold tracking-tight">${dish.name}</h2>
+                                        <p class="text-zinc-400 text-xs mt-1 uppercase font-bold tracking-widest">Actual Portion Size</p>
+                                    </div>
+                                    <span class="text-2xl font-black text-orange-500">${data.currency}${dish.price}</span>
                                 </div>
-                                <div class="flex gap-4 text-[10px] font-bold text-gray-400 mb-4 uppercase tracking-widest">
-                                    <span>🔥 ${dish.calories}</span>
-                                    <span>💪 ${dish.protein}</span>
-                                    <span class="${dish.type === 'veg' ? 'text-green-500' : 'text-red-500'}">● ${dish.type}</span>
+                                
+                                <div class="flex gap-3 mb-6">
+                                    <span class="bg-zinc-100 px-3 py-1 rounded-full text-[10px] font-bold text-zinc-500 underline decoration-orange-500">CAL: ${dish.calories}</span>
+                                    <span class="bg-zinc-100 px-3 py-1 rounded-full text-[10px] font-bold text-zinc-500">PRO: ${dish.protein}</span>
                                 </div>
-                                <p class="text-[10px] text-gray-300 leading-tight uppercase mb-6">Allergens: ${dish.allergens}</p>
-                                <button class="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-colors">
+
+                                <button class="w-full bg-orange-500 text-white py-5 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 hover:bg-orange-600 transition-colors uppercase tracking-tighter">
                                     Add to Order
                                 </button>
                             </div>
@@ -84,7 +100,7 @@
                     `;
                 });
             } catch (e) {
-                console.error("Error loading menu:", e);
+                console.error("Critical: Menu failed to build.", e);
             }
         }
         init();
