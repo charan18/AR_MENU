@@ -67,8 +67,10 @@
             loading.classList.remove('hidden');
 
             if (currentViewer) {
+                // Triggers the AR mode
                 currentViewer.activateAR();
                 
+                // Backup safety: hide loading if nothing happens in 8s
                 clearTimeout(loadingTimeout);
                 loadingTimeout = setTimeout(() => {
                     loading.classList.add('hidden');
@@ -88,14 +90,14 @@
                     const dishCard = document.createElement('div');
                     dishCard.className = "bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-zinc-100";
                     
-                    // FIXED: Added #allowsContentScaling=0 to enable rotation and lock size
+                    // FIXED: ar-modes updated for Android stability, ios-src updated for rotation
                     dishCard.innerHTML = `
                         <model-viewer 
                             src="${baseUrl}${dish.glb}" 
                             ios-src="${baseUrl}${dish.usdz}#allowsContentScaling=0"
                             ar 
-                            ar-modes="quick-look webxr" 
-                            ar-placement="floor"
+                            ar-modes="webxr scene-viewer quick-look" 
+                            ar-placement="auto"
                             camera-controls 
                             touch-action="pan-y"
                             shadow-intensity="1.5"
@@ -104,7 +106,7 @@
                             class="w-full h-80 bg-zinc-50">
                             
                             <button slot="ar-button" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest z-50">
-                                View in AR
+                                View in Room
                             </button>
                         </model-viewer>
 
@@ -118,9 +120,10 @@
                     const arBtn = dishCard.querySelector('[slot="ar-button"]');
                     arBtn.addEventListener('click', (e) => openGuide(e, arBtn));
 
-                    // REFINED: Handles closing camera, swiping up, or errors
+                    // REFINED: Universal listener to reset UI when AR starts or stops
                     viewer.addEventListener('ar-status', (event) => {
                         const loading = document.getElementById('ar-loading');
+                        const overlay = document.getElementById('ar-overlay');
                         
                         if (event.detail.status === 'session-started') {
                             clearTimeout(loadingTimeout);
@@ -130,7 +133,7 @@
                         if (event.detail.status === 'not-presenting') {
                             clearTimeout(loadingTimeout);
                             loading.classList.add('hidden');
-                            document.getElementById('ar-overlay').classList.add('hidden');
+                            overlay.classList.add('hidden');
                         }
 
                         if (event.detail.status === 'failed') {
@@ -142,7 +145,7 @@
                 });
 
             } catch (e) { 
-                console.error("Initialization error", e); 
+                console.error("Critical Failure:", e); 
             }
         }
 
