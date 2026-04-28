@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Menu Pilot</title>
+    <title>AR Menu | Pro Pilot</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,15 +17,15 @@
 
     <div id="ar-overlay" class="hidden fixed inset-0 bg-black/95 z-[500] flex flex-col items-center justify-center text-white text-center p-8">
         <img src="https://modelviewer.dev/shared-assets/icons/hand.png" class="w-16 mb-6 opacity-80 mx-auto">
-        <h2 id="overlay-title" class="text-2xl font-bold mb-3 uppercase italic">Place Your Dish</h2>
-        <p id="overlay-text" class="text-zinc-400 text-sm max-w-[280px] mx-auto">
-            Point your camera at the table and <span class="text-white font-bold">move slowly</span>.
+        <h2 class="text-2xl font-bold mb-3 uppercase italic tracking-wider">Place Your Dish</h2>
+        <p class="text-zinc-400 text-sm max-w-[280px] mx-auto">
+            Point your camera at the table and <span class="text-white font-bold">move slowly</span>. Use two fingers to rotate.
         </p>
         <div class="mt-10 flex flex-col gap-4">
-            <button id="start-button" onclick="startAR()" class="bg-white text-black px-12 py-4 rounded-full font-black uppercase text-xs tracking-widest active:scale-95 transition-transform">
+            <button onclick="startAR()" class="bg-white text-black px-12 py-4 rounded-full font-black uppercase text-xs tracking-widest active:scale-95 transition-transform">
                 Open Camera
             </button>
-            <button id="close-button" onclick="hideOverlay()" class="text-zinc-500 text-xs font-bold uppercase tracking-widest py-2">
+            <button onclick="hideOverlay()" class="text-zinc-500 text-xs font-bold uppercase tracking-widest py-2">
                 Cancel
             </button>
         </div>
@@ -69,7 +69,6 @@
             if (currentViewer) {
                 currentViewer.activateAR();
                 
-                // SAFETY TIMEOUT: If AR doesn't start in 8s, clear the loading screen
                 clearTimeout(loadingTimeout);
                 loadingTimeout = setTimeout(() => {
                     loading.classList.add('hidden');
@@ -89,27 +88,29 @@
                     const dishCard = document.createElement('div');
                     dishCard.className = "bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-zinc-100";
                     
+                    // FIXED: Added #allowsContentScaling=0 to enable rotation and lock size
                     dishCard.innerHTML = `
                         <model-viewer 
                             src="${baseUrl}${dish.glb}" 
-                            ios-src="${baseUrl}${dish.usdz}"
-                            ar ar-modes="quick-look webxr" 
-                            ar-placement="auto"
-                            ar-scale="auto"
+                            ios-src="${baseUrl}${dish.usdz}#allowsContentScaling=0"
+                            ar 
+                            ar-modes="quick-look webxr" 
+                            ar-placement="floor"
                             camera-controls 
+                            touch-action="pan-y"
                             shadow-intensity="1.5"
                             exposure="1.2"
                             tone-mapping="commerce"
                             class="w-full h-80 bg-zinc-50">
                             
                             <button slot="ar-button" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest z-50">
-                                View in Room
+                                View in AR
                             </button>
                         </model-viewer>
 
                         <div class="p-6 text-center">
-                            <h2 class="text-xl font-bold uppercase">${dish.name}</h2>
-                            <p class="text-orange-600 font-black mt-1">${data.currency}${dish.price}</p>
+                            <h2 class="text-xl font-bold uppercase italic tracking-tight">${dish.name}</h2>
+                            <p class="text-orange-600 font-black mt-1 text-lg">${data.currency}${dish.price}</p>
                         </div>
                     `;
 
@@ -117,24 +118,21 @@
                     const arBtn = dishCard.querySelector('[slot="ar-button"]');
                     arBtn.addEventListener('click', (e) => openGuide(e, arBtn));
 
-                    // THE FIX: Listen for any change in AR status
+                    // REFINED: Handles closing camera, swiping up, or errors
                     viewer.addEventListener('ar-status', (event) => {
                         const loading = document.getElementById('ar-loading');
                         
-                        // Status: session-started (User is in camera)
                         if (event.detail.status === 'session-started') {
                             clearTimeout(loadingTimeout);
                             loading.classList.add('hidden');
                         }
 
-                        // Status: not-presenting (User CLOSED camera or hit 'X')
                         if (event.detail.status === 'not-presenting') {
                             clearTimeout(loadingTimeout);
                             loading.classList.add('hidden');
                             document.getElementById('ar-overlay').classList.add('hidden');
                         }
 
-                        // Status: failed
                         if (event.detail.status === 'failed') {
                             loading.classList.add('hidden');
                         }
@@ -143,7 +141,9 @@
                     container.appendChild(dishCard);
                 });
 
-            } catch (e) { console.error("Initialization error", e); }
+            } catch (e) { 
+                console.error("Initialization error", e); 
+            }
         }
 
         init();
