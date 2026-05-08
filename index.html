@@ -3,119 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart AR Cafe | Physics Optimized</title>
+    <title>Smart AR Cafe | Digital Menu</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         model-viewer::part(default-ar-button) { display: none; }
-        .hidden { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .active-tab { background: #18181b; color: white; border-color: #18181b; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loader { border-top-color: transparent; border-width: 3px; animation: spin 0.8s linear infinite; }
-        
-        /* Smooth entry for cards */
-        .card-enter { animation: slideUp 0.6s ease-out forwards; }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .active-tab { background: #f97316; color: white; border-color: #f97316; }
+        .hero-gradient { background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%); }
+        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .cart-drawer { animation: slideIn 0.3s ease-out; }
     </style>
 </head>
-<body class="bg-white text-zinc-900 font-sans antialiased">
+<body class="bg-zinc-50 text-zinc-900 font-sans antialiased">
 
-    <!-- AR LOADING SCREEN -->
+    <!-- AR OVERLAYS (Keep same as previous) -->
     <div id="ar-loading" class="hidden fixed inset-0 bg-black/90 z-[600] flex flex-col items-center justify-center text-white">
-        <div class="w-10 h-10 border-4 border-white/20 rounded-full loader mb-4"></div>
-        <p class="text-[10px] font-bold uppercase tracking-[0.2em]">Syncing to Surface...</p>
+        <div class="w-10 h-10 border-4 border-white/20 border-t-orange-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-[10px] font-bold uppercase tracking-widest">Warming up AR...</p>
     </div>
 
-    <!-- AR PLACEMENT OVERLAY -->
-    <div id="ar-overlay" class="hidden fixed inset-0 bg-black/95 z-[500] flex flex-col items-center justify-center text-white text-center p-8">
-        <img src="https://modelviewer.dev/shared-assets/icons/hand.png" class="w-16 mb-6 opacity-80 mx-auto">
-        <h2 class="text-2xl font-bold mb-3 uppercase italic tracking-wider">Ground Your Dish</h2>
-        <p class="text-zinc-400 text-sm max-w-[280px] mx-auto leading-relaxed">
-            For best results, aim at a <span class="text-white font-bold underline decoration-orange-500">non-reflective table</span>. Move your phone in a slow circle.
-        </p>
-        <div class="mt-10 flex flex-col gap-4 w-full max-w-[200px]">
-            <button onclick="startAR()" class="bg-white text-black px-12 py-4 rounded-full font-black uppercase text-xs tracking-widest active:scale-95 transition-transform shadow-xl">
-                Start AR
-            </button>
-            <button onclick="hideOverlay()" class="text-zinc-500 text-xs font-bold uppercase tracking-widest py-2">
-                Exit
-            </button>
-        </div>
-    </div>
-
-    <!-- HEADER -->
-    <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-zinc-100">
-        <div class="max-w-md mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 id="res-name" class="font-black italic text-xl tracking-tighter uppercase underline decoration-orange-500 decoration-4">MENU</h1>
-            <div class="relative active:scale-90 transition-transform cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                <span id="cart-count" class="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-all">0</span>
+    <!-- 1. HERO SECTION -->
+    <header class="relative h-64 w-full bg-zinc-900 overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800" class="w-full h-full object-cover opacity-60">
+        <div class="absolute inset-0 hero-gradient"></div>
+        <div class="absolute bottom-0 left-0 p-6">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-500 w-2 h-2 rounded-full"></span>
+                <span class="text-white text-[10px] font-bold uppercase tracking-widest">Live Menu</span>
             </div>
+            <h1 id="res-name" class="text-3xl font-black text-white italic tracking-tighter uppercase">THE SMART CAFE</h1>
+            <p class="text-zinc-300 text-xs mt-1">Premium Photogrammetry Dining Experience</p>
         </div>
-        <div id="category-bar" class="max-w-md mx-auto px-6 pb-4 flex gap-2 overflow-x-auto no-scrollbar"></div>
-    </div>
+    </header>
 
-    <!-- MAIN MENU FEED -->
-    <main class="max-w-md mx-auto p-6">
-        <div id="menu-container" class="grid grid-cols-1 gap-10">
-            <!-- Dishes will be rendered here -->
+    <!-- 2. CATEGORY PILLS -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-zinc-100 py-4">
+        <div id="category-bar" class="flex gap-2 overflow-x-auto px-6 no-scrollbar">
+            <!-- Injected -->
+        </div>
+    </nav>
+
+    <!-- 3. PRODUCT GRID -->
+    <main class="p-6 pb-32">
+        <div id="menu-container" class="grid grid-cols-1 gap-10 max-w-md mx-auto">
+            <!-- Injected -->
         </div>
     </main>
+
+    <!-- 4. STICKY CART FOOTER -->
+    <div id="cart-footer" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900 text-white rounded-3xl p-4 shadow-2xl flex justify-between items-center z-[100] cart-drawer border border-white/10">
+        <div class="flex items-center gap-4">
+            <div class="bg-orange-500 p-2 rounded-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div>
+                <p id="cart-items-text" class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">0 Items</p>
+                <p id="cart-total" class="font-black text-lg">£0.00</p>
+            </div>
+        </div>
+        <button class="bg-white text-black px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform">
+            Checkout
+        </button>
+    </div>
 
     <script>
         let menuData = null;
         let activeCategory = "All";
-        let currentViewer = null;
-        let loadingTimeout = null;
-        const baseUrl = window.location.href.split('index.html')[0];
-
-        function hideOverlay() {
-            document.getElementById('ar-overlay').classList.add('hidden');
-        }
-
-        function openGuide(event, buttonElement) {
-            event.preventDefault(); 
-            currentViewer = buttonElement.closest('model-viewer');
-            document.getElementById('ar-overlay').classList.remove('hidden');
-        }
-
-        function startAR() {
-            document.getElementById('ar-overlay').classList.add('hidden');
-            const loading = document.getElementById('ar-loading');
-            loading.classList.remove('hidden');
-
-            if (currentViewer) {
-                if (currentViewer.dismissPoster) currentViewer.dismissPoster();
-                
-                requestAnimationFrame(() => {
-                    currentViewer.activateAR();
-                });
-
-                clearTimeout(loadingTimeout);
-                loadingTimeout = setTimeout(() => {
-                    loading.classList.add('hidden');
-                }, 6000); 
-            }
-        }
+        let cart = [];
 
         async function init() {
-            try {
-                const res = await fetch('data.json');
-                menuData = await res.json();
-                
-                const uniqueTypes = [...new Set(menuData.dishes.map(d => d.type))];
-                menuData.categories = ["All", ...uniqueTypes];
-
-                document.getElementById('res-name').innerText = menuData.restaurant;
-                renderCategories();
-                renderMenu();
-            } catch (e) {
-                console.error("JSON Error:", e);
-            }
+            const res = await fetch('data.json');
+            menuData = await res.json();
+            const types = [...new Set(menuData.dishes.map(d => d.type))];
+            menuData.categories = ["All", ...types];
+            document.getElementById('res-name').innerText = menuData.restaurant;
+            renderCategories();
+            renderMenu();
         }
 
         function renderCategories() {
@@ -123,13 +87,9 @@
             bar.innerHTML = '';
             menuData.categories.forEach(cat => {
                 const btn = document.createElement('button');
-                btn.className = `px-6 py-2 rounded-full border border-zinc-200 text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${activeCategory === cat ? 'active-tab shadow-lg' : 'bg-zinc-50 text-zinc-400'}`;
+                btn.className = `px-5 py-2 rounded-xl border border-zinc-200 text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${activeCategory === cat ? 'active-tab' : 'bg-white text-zinc-400'}`;
                 btn.innerText = cat.toUpperCase();
-                btn.onclick = () => {
-                    activeCategory = cat;
-                    renderCategories();
-                    renderMenu();
-                };
+                btn.onclick = () => { activeCategory = cat; renderCategories(); renderMenu(); };
                 bar.appendChild(btn);
             });
         }
@@ -137,88 +97,48 @@
         function renderMenu() {
             const container = document.getElementById('menu-container');
             container.innerHTML = '';
-            
-            const filtered = activeCategory === "All" 
-                ? menuData.dishes 
-                : menuData.dishes.filter(d => d.type === activeCategory);
+            const filtered = activeCategory === "All" ? menuData.dishes : menuData.dishes.filter(d => d.type === activeCategory);
 
             filtered.forEach(dish => {
                 const card = document.createElement('div');
-                card.className = "card-enter";
-                
+                card.className = "bg-white rounded-[2.5rem] p-2 border border-zinc-100 shadow-sm overflow-hidden";
                 card.innerHTML = `
-                    <div class="relative rounded-[2.5rem] overflow-hidden bg-zinc-50 mb-4 border border-zinc-100 shadow-sm group">
-                        <model-viewer 
-                            src="${baseUrl}${dish.glb}" 
-                            ios-src="${baseUrl}${dish.usdz}#allowsContentScaling=0"
-                            ar ar-modes="webxr scene-viewer quick-look" 
-                            ar-placement="floor"
-                            ar-scale="fixed"
-                            camera-controls touch-action="pan-y"
-                            shadow-intensity="2" 
-                            shadow-softness="1"
-                            exposure="1.2" 
-                            tone-mapping="commerce"
-                            loading="eager" 
-                            reveal="auto"
-                            interaction-prompt="none"
-                            environment-image="neutral"
-                            bounds="tight"
-                            class="w-full h-80 transition-transform duration-500 group-hover:scale-105">
-                            <button slot="ar-button" class="absolute bottom-5 right-5 bg-white/95 backdrop-blur shadow-2xl p-4 rounded-full active:scale-90 transition-transform z-50 border border-zinc-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    <div class="relative h-80 rounded-[2rem] overflow-hidden bg-zinc-50 border border-zinc-50">
+                        <model-viewer src="${dish.glb}" ios-src="${dish.usdz}" ar ar-scale="fixed" camera-controls touch-action="pan-y" 
+                        loading="eager" environment-image="neutral" shadow-intensity="2" class="w-full h-full">
+                            <button slot="ar-button" class="absolute bottom-4 right-4 bg-white p-4 rounded-full shadow-xl border border-zinc-100 active:scale-90 transition-transform">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                             </button>
                         </model-viewer>
+                        <div class="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+                            <span class="text-white text-[8px] font-black uppercase tracking-tighter">Life Scale 1:1</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-start px-4">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-2xl uppercase italic tracking-tighter leading-tight">${dish.name}</h3>
-                            <div class="flex gap-2 mt-2">
-                                <span class="text-[9px] font-black px-2 py-1 rounded bg-zinc-900 text-white uppercase tracking-tighter">${dish.type}</span>
-                                <span class="text-[9px] font-bold px-2 py-1 rounded border border-zinc-200 text-zinc-500 uppercase tracking-tighter">${dish.calories}</span>
-                            </div>
+                    <div class="p-4 flex justify-between items-end">
+                        <div>
+                            <p class="text-orange-500 text-[10px] font-black uppercase tracking-widest mb-1">${dish.type}</p>
+                            <h3 class="text-xl font-black italic tracking-tighter uppercase leading-none mb-1">${dish.name}</h3>
+                            <p class="text-zinc-400 text-[10px] font-bold uppercase tracking-tighter">Cal: ${dish.calories} • ${dish.allergens}</p>
                         </div>
                         <div class="text-right">
-                            <p class="font-black text-orange-600 text-2xl tracking-tighter">${menuData.currency}${dish.price}</p>
-                            <button onclick="addToCart(this)" class="mt-3 text-[10px] font-black uppercase tracking-widest bg-zinc-900 text-white px-7 py-3 rounded-full active:scale-95 transition-all shadow-lg shadow-zinc-200 hover:bg-orange-600">Add to Order</button>
+                            <p class="text-2xl font-black tracking-tighter mb-2">£${dish.price}</p>
+                            <button onclick="addToCart('${dish.name}', ${dish.price})" class="bg-zinc-900 text-white p-3 rounded-2xl active:scale-90 transition-transform">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </button>
                         </div>
                     </div>
                 `;
-                
-                const viewer = card.querySelector('model-viewer');
-                const arBtn = card.querySelector('[slot="ar-button"]');
-                
-                arBtn.addEventListener('click', (e) => openGuide(e, arBtn));
-
-                viewer.addEventListener('ar-status', (event) => {
-                    const loading = document.getElementById('ar-loading');
-                    if (event.detail.status === 'session-started' || event.detail.status === 'not-presenting') {
-                        loading.classList.add('hidden');
-                        document.getElementById('ar-overlay').classList.add('hidden');
-                    }
-                });
-
                 container.appendChild(card);
             });
         }
 
-        let cartCount = 0;
-        function addToCart(btn) {
-            cartCount++;
-            const el = document.getElementById('cart-count');
-            el.innerText = cartCount;
-            el.classList.add('scale-150', 'bg-orange-500');
-            
-            // Visual feedback on button
-            const originalText = btn.innerText;
-            btn.innerText = "ADDED ✓";
-            btn.classList.add('bg-orange-600');
-            
-            setTimeout(() => {
-                el.classList.remove('scale-150', 'bg-orange-600');
-                btn.innerText = originalText;
-                btn.classList.remove('bg-orange-600');
-            }, 800);
+        function addToCart(name, price) {
+            cart.push({name, price});
+            const footer = document.getElementById('cart-footer');
+            footer.classList.remove('hidden');
+            document.getElementById('cart-items-text').innerText = `${cart.length} Items`;
+            const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
+            document.getElementById('cart-total').innerText = `£${total.toFixed(2)}`;
         }
 
         init();
