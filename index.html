@@ -17,7 +17,7 @@
 </head>
 <body class="bg-zinc-50 text-zinc-900 font-sans antialiased">
 
-    <!-- AR OVERLAYS (Keep same as previous) -->
+    <!-- AR OVERLAYS -->
     <div id="ar-loading" class="hidden fixed inset-0 bg-black/90 z-[600] flex flex-col items-center justify-center text-white">
         <div class="w-10 h-10 border-4 border-white/20 border-t-orange-500 rounded-full animate-spin mb-4"></div>
         <p class="text-[10px] font-bold uppercase tracking-widest">Warming up AR...</p>
@@ -62,7 +62,7 @@
                 <p id="cart-total" class="font-black text-lg">£0.00</p>
             </div>
         </div>
-        <button class="bg-white text-black px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform">
+        <button onclick="proceedToCheckout()" class="bg-white text-black px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform">
             Checkout
         </button>
     </div>
@@ -71,13 +71,25 @@
         let menuData = null;
         let activeCategory = "All";
         let cart = [];
+        const urlParams = new URLSearchParams(window.location.search);
+        const tableNumber = urlParams.get('table') || "TBD";
 
         async function init() {
             const res = await fetch('data.json');
             menuData = await res.json();
-            const types = [...new Set(menuData.dishes.map(d => d.type))];
-            menuData.categories = ["All", ...types];
+            
+            // Auto-generate unique categories from the JSON
+            const categoriesFromData = [...new Set(menuData.dishes.map(d => d.category || d.type))];
+            menuData.categories = ["All", ...categoriesFromData];
+            
             document.getElementById('res-name').innerText = menuData.restaurant;
+            
+            // Add Table Badge
+            const tableBadge = document.createElement('div');
+            tableBadge.className = "absolute top-4 right-4 bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full z-[100]";
+            tableBadge.innerText = `TABLE ${tableNumber}`;
+            document.querySelector('header').appendChild(tableBadge);
+
             renderCategories();
             renderMenu();
         }
@@ -97,14 +109,14 @@
         function renderMenu() {
             const container = document.getElementById('menu-container');
             container.innerHTML = '';
-            const filtered = activeCategory === "All" ? menuData.dishes : menuData.dishes.filter(d => d.type === activeCategory);
+            const filtered = activeCategory === "All" ? menuData.dishes : menuData.dishes.filter(d => (d.category || d.type) === activeCategory);
 
             filtered.forEach(dish => {
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-[2.5rem] p-2 border border-zinc-100 shadow-sm overflow-hidden";
                 card.innerHTML = `
                     <div class="relative h-80 rounded-[2rem] overflow-hidden bg-zinc-50 border border-zinc-50">
-                        <model-viewer src="${dish.glb}" ios-src="${dish.usdz}" ar ar-scale="fixed" camera-controls touch-action="pan-y" 
+                        <model-viewer src="${dish.glb}" ios-src="${dish.usdz}" ar ar-placement="floor" ar-scale="fixed" camera-controls touch-action="pan-y" 
                         loading="eager" environment-image="neutral" shadow-intensity="2" class="w-full h-full">
                             <button slot="ar-button" class="absolute bottom-4 right-4 bg-white p-4 rounded-full shadow-xl border border-zinc-100 active:scale-90 transition-transform">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
@@ -115,10 +127,10 @@
                         </div>
                     </div>
                     <div class="p-4 flex justify-between items-end">
-                        <div>
-                            <p class="text-orange-500 text-[10px] font-black uppercase tracking-widest mb-1">${dish.type}</p>
+                        <div class="flex-1 pr-4">
+                            <p class="text-orange-500 text-[10px] font-black uppercase tracking-widest mb-1">${dish.type || dish.category}</p>
                             <h3 class="text-xl font-black italic tracking-tighter uppercase leading-none mb-1">${dish.name}</h3>
-                            <p class="text-zinc-400 text-[10px] font-bold uppercase tracking-tighter">Cal: ${dish.calories} • ${dish.allergens}</p>
+                            <p class="text-zinc-400 text-[10px] font-bold uppercase tracking-tighter leading-tight">Cal: ${dish.calories} • ${dish.allergens}</p>
                         </div>
                         <div class="text-right">
                             <p class="text-2xl font-black tracking-tighter mb-2">£${dish.price}</p>
@@ -139,6 +151,11 @@
             document.getElementById('cart-items-text').innerText = `${cart.length} Items`;
             const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
             document.getElementById('cart-total').innerText = `£${total.toFixed(2)}`;
+        }
+
+        function proceedToCheckout() {
+            const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2);
+            alert(`Order Sent to Kitchen!\nTable: ${tableNumber}\nTotal: £${total}\n\nOur waiter will be with you shortly.`);
         }
 
         init();
