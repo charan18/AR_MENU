@@ -3,103 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart AR Cafe | Digital Menu</title>
+    <title>Smart AR Menu | Pro Edition</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         model-viewer::part(default-ar-button) { display: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .active-tab { background: #f97316; color: white; border-color: #f97316; }
-        .hero-gradient { background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%); }
-        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .cart-drawer { animation: slideIn 0.3s ease-out; }
+        .cart-open { transform: translateY(0) !important; }
+        
+        /* The Alignment Guide */
+        #ar-guidance {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.8);
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .qr-frame {
+            width: 220px;
+            height: 220px;
+            border: 4px dashed #f97316;
+            border-radius: 24px;
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
     </style>
 </head>
-<body class="bg-zinc-50 text-zinc-900 font-sans antialiased">
+<body class="bg-zinc-50 text-zinc-900 font-sans antialiased overflow-x-hidden">
 
-    <!-- AR OVERLAYS -->
-    <div id="ar-loading" class="hidden fixed inset-0 bg-black/90 z-[600] flex flex-col items-center justify-center text-white">
-        <div class="w-10 h-10 border-4 border-white/20 border-t-orange-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-[10px] font-bold uppercase tracking-widest">Warming up AR...</p>
+    <!-- AR ALIGNMENT GUIDE -->
+    <div id="ar-guidance">
+        <div class="qr-frame"></div>
+        <p class="text-white text-center mt-8 px-10 text-sm font-black leading-relaxed tracking-tight">
+            ALIGN BOX WITH THE <span class="text-orange-500">TABLE QR</span><br>
+            FOR INSTANT 3D PLACEMENT
+        </p>
     </div>
 
-    <!-- 1. HERO SECTION -->
-    <header class="relative h-64 w-full bg-zinc-900 overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800" class="w-full h-full object-cover opacity-60">
-        <div class="absolute inset-0 hero-gradient"></div>
-        <div class="absolute bottom-0 left-0 p-6">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="bg-green-500 w-2 h-2 rounded-full"></span>
-                <span class="text-white text-[10px] font-bold uppercase tracking-widest">Live Menu</span>
-            </div>
-            <h1 id="res-name" class="text-3xl font-black text-white italic tracking-tighter uppercase">THE SMART CAFE</h1>
-            <p class="text-zinc-300 text-xs mt-1">Premium Photogrammetry Dining Experience</p>
+    <!-- HEADER & HERO -->
+    <header class="relative h-56 w-full bg-zinc-900 overflow-hidden">
+        <img id="hero-img" src="" class="w-full h-full object-cover opacity-40">
+        <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent"></div>
+        <div class="absolute bottom-6 left-6">
+            <h1 id="res-name" class="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">LOADING...</h1>
+            <div id="table-label" class="inline-block mt-2 bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Table TBD</div>
         </div>
     </header>
 
-    <!-- 2. CATEGORY PILLS -->
-    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-zinc-100 py-4">
-        <div id="category-bar" class="flex gap-2 overflow-x-auto px-6 no-scrollbar">
-            <!-- Injected -->
-        </div>
+    <!-- CATEGORY NAVIGATION -->
+    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-zinc-100 py-4">
+        <div id="category-bar" class="flex gap-2 overflow-x-auto px-6 no-scrollbar"></div>
     </nav>
 
-    <!-- 3. PRODUCT GRID -->
-    <main class="p-6 pb-32">
-        <div id="menu-container" class="grid grid-cols-1 gap-10 max-w-md mx-auto">
-            <!-- Injected -->
-        </div>
+    <!-- MENU GRID -->
+    <main class="p-6 pb-40 max-w-md mx-auto">
+        <div id="menu-container" class="grid grid-cols-1 gap-12"></div>
     </main>
 
-    <!-- 4. STICKY CART FOOTER -->
-    <div id="cart-footer" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900 text-white rounded-3xl p-4 shadow-2xl flex justify-between items-center z-[100] cart-drawer border border-white/10">
-        <div class="flex items-center gap-4">
-            <div class="bg-orange-500 p-2 rounded-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <!-- CART SHEET (ZOMATO STYLE) -->
+    <div id="cart-overlay" class="fixed inset-0 bg-black/60 z-[200] hidden backdrop-blur-sm transition-opacity" onclick="toggleCart()"></div>
+    
+    <div id="cart-sheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-[3rem] z-[300] transform translate-y-full transition-transform duration-500 ease-in-out shadow-2xl max-w-md mx-auto h-[75vh] flex flex-col">
+        <div class="p-8 flex-1 overflow-y-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-black italic tracking-tighter">MY ORDER</h2>
+                <button onclick="toggleCart()" class="bg-zinc-100 p-2 rounded-full">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
             </div>
-            <div>
-                <p id="cart-items-text" class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">0 Items</p>
-                <p id="cart-total" class="font-black text-lg">£0.00</p>
+            
+            <div id="cart-items-list" class="space-y-6"></div>
+
+            <div class="mt-10">
+                <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Special Instructions</label>
+                <textarea id="order-comments" placeholder="Add extra sauce, allergies, etc..." class="w-full mt-2 p-5 bg-zinc-100 rounded-[2rem] text-sm outline-none focus:ring-2 focus:ring-orange-500 min-h-[120px]"></textarea>
             </div>
         </div>
-        <button onclick="proceedToCheckout()" class="bg-white text-black px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform">
-            Checkout
+
+        <div class="p-8 bg-zinc-50 border-t border-zinc-100 rounded-t-[3rem]">
+            <div class="flex justify-between items-center mb-6">
+                <span class="font-bold text-zinc-400 uppercase text-xs tracking-widest">Total Amount</span>
+                <span id="cart-total-sheet" class="font-black text-3xl italic tracking-tighter">£0.00</span>
+            </div>
+            <button onclick="sendOrder()" class="w-full bg-zinc-900 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform">
+                Confirm Order
+            </button>
+        </div>
+    </div>
+
+    <!-- BOTTOM FLOATING PEEK -->
+    <div id="cart-peek" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900 text-white rounded-full p-2 pl-8 shadow-2xl flex justify-between items-center z-[100] border border-white/10">
+        <div class="flex items-center gap-2">
+            <span id="peek-count" class="text-orange-500 font-black italic text-xl">0</span>
+            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Items</span>
+        </div>
+        <button onclick="toggleCart()" class="bg-orange-500 text-white px-10 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all">
+            Review Order
         </button>
     </div>
 
     <script>
         let menuData = null;
         let activeCategory = "All";
-        let cart = [];
-        const urlParams = new URLSearchParams(window.location.search);
-        const tableNumber = urlParams.get('table') || "TBD";
+        let cart = {};
+        const table = new URLSearchParams(window.location.search).get('table') || "01";
 
         async function init() {
-            const res = await fetch('data.json');
-            menuData = await res.json();
-            
-            // Auto-generate unique categories from the JSON
-            const categoriesFromData = [...new Set(menuData.dishes.map(d => d.category || d.type))];
-            menuData.categories = ["All", ...categoriesFromData];
-            
-            document.getElementById('res-name').innerText = menuData.restaurant;
-            
-            // Add Table Badge
-            const tableBadge = document.createElement('div');
-            tableBadge.className = "absolute top-4 right-4 bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full z-[100]";
-            tableBadge.innerText = `TABLE ${tableNumber}`;
-            document.querySelector('header').appendChild(tableBadge);
+            try {
+                const res = await fetch('data.json');
+                menuData = await res.json();
+                
+                document.getElementById('res-name').innerText = menuData.restaurant;
+                document.getElementById('hero-img').src = menuData.hero_image;
+                document.getElementById('table-label').innerText = `Table ${table}`;
 
-            renderCategories();
-            renderMenu();
+                renderCategories();
+                renderMenu();
+            } catch (e) { console.error("JSON Load Error", e); }
         }
 
         function renderCategories() {
             const bar = document.getElementById('category-bar');
             bar.innerHTML = '';
-            menuData.categories.forEach(cat => {
+            const allCats = ["All", ...menuData.categories];
+            allCats.forEach(cat => {
                 const btn = document.createElement('button');
-                btn.className = `px-5 py-2 rounded-xl border border-zinc-200 text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${activeCategory === cat ? 'active-tab' : 'bg-white text-zinc-400'}`;
+                btn.className = `px-6 py-2.5 rounded-2xl border text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${activeCategory === cat ? 'active-tab shadow-md' : 'bg-white text-zinc-400 border-zinc-200'}`;
                 btn.innerText = cat.toUpperCase();
                 btn.onclick = () => { activeCategory = cat; renderCategories(); renderMenu(); };
                 bar.appendChild(btn);
@@ -109,56 +150,108 @@
         function renderMenu() {
             const container = document.getElementById('menu-container');
             container.innerHTML = '';
-            const filtered = activeCategory === "All" ? menuData.dishes : menuData.dishes.filter(d => (d.category || d.type) === activeCategory);
+            const filtered = activeCategory === "All" ? menuData.dishes : menuData.dishes.filter(d => d.category === activeCategory);
 
-            filtered.forEach(dish => {
+            filtered.forEach((dish) => {
+                const qty = cart[dish.id]?.qty || 0;
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-[2.5rem] p-2 border border-zinc-100 shadow-sm overflow-hidden";
+                card.className = "bg-white rounded-[3rem] p-3 border border-zinc-100 shadow-sm transition-all";
                 card.innerHTML = `
-                    <div class="relative h-80 rounded-[2rem] overflow-hidden bg-zinc-50 border border-zinc-50">
+                    <div class="relative h-72 rounded-[2.5rem] overflow-hidden bg-zinc-50 border border-zinc-50">
                         <model-viewer src="${dish.glb}" ios-src="${dish.usdz}" ar ar-placement="floor" ar-scale="fixed" camera-controls touch-action="pan-y" 
                         loading="eager" environment-image="neutral" shadow-intensity="2" class="w-full h-full">
-                            <button slot="ar-button" class="absolute bottom-4 right-4 bg-white p-4 rounded-full shadow-xl border border-zinc-100 active:scale-90 transition-transform">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            <button slot="ar-button" class="absolute bottom-5 right-5 bg-white p-5 rounded-full shadow-2xl border border-zinc-100">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                             </button>
                         </model-viewer>
-                        <div class="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-                            <span class="text-white text-[8px] font-black uppercase tracking-tighter">Life Scale 1:1</span>
+                        <div class="absolute top-5 left-5 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
+                            <span class="text-white text-[9px] font-black uppercase tracking-tighter italic">Life Size 1:1</span>
                         </div>
                     </div>
-                    <div class="p-4 flex justify-between items-end">
-                        <div class="flex-1 pr-4">
-                            <p class="text-orange-500 text-[10px] font-black uppercase tracking-widest mb-1">${dish.type || dish.category}</p>
-                            <h3 class="text-xl font-black italic tracking-tighter uppercase leading-none mb-1">${dish.name}</h3>
-                            <p class="text-zinc-400 text-[10px] font-bold uppercase tracking-tighter leading-tight">Cal: ${dish.calories} • ${dish.allergens}</p>
+                    <div class="p-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-2xl font-black italic tracking-tighter uppercase leading-none mb-1">${dish.name}</h3>
+                            <p class="text-orange-500 font-black text-xl italic leading-none">£${dish.price}</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-2xl font-black tracking-tighter mb-2">£${dish.price}</p>
-                            <button onclick="addToCart('${dish.name}', ${dish.price})" class="bg-zinc-900 text-white p-3 rounded-2xl active:scale-90 transition-transform">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                            </button>
+                        <div id="ui-${dish.id}">
+                            ${qty > 0 ? renderQtyUI(dish) : `<button onclick='addToCart(${JSON.stringify(dish)})' class="bg-zinc-900 text-white px-10 py-4 rounded-[1.5rem] font-black text-[10px] tracking-widest active:scale-95 transition-all">ADD</button>`}
                         </div>
                     </div>
                 `;
+
+                // Logic for Alignment Guide
+                const viewer = card.querySelector('model-viewer');
+                viewer.addEventListener('ar-status', (e) => {
+                    const guide = document.getElementById('ar-guidance');
+                    if (e.detail.status === 'session-started') {
+                        guide.style.display = 'flex';
+                        setTimeout(() => { guide.style.opacity = '0'; setTimeout(() => guide.style.display = 'none', 500); }, 4000);
+                    } else { guide.style.display = 'none'; guide.style.opacity = '1'; }
+                });
+
                 container.appendChild(card);
             });
         }
 
-        function addToCart(name, price) {
-            cart.push({name, price});
-            const footer = document.getElementById('cart-footer');
-            footer.classList.remove('hidden');
-            document.getElementById('cart-items-text').innerText = `${cart.length} Items`;
-            const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
-            document.getElementById('cart-total').innerText = `£${total.toFixed(2)}`;
+        function renderQtyUI(dish) {
+            return `
+                <div class="flex items-center gap-5 bg-zinc-100 p-1.5 rounded-[1.5rem] border border-zinc-200">
+                    <button onclick='updateQty("${dish.id}", -1)' class="w-11 h-11 flex items-center justify-center bg-white rounded-2xl shadow-sm font-black text-xl">-</button>
+                    <span class="font-black italic text-xl w-4 text-center">${cart[dish.id].qty}</span>
+                    <button onclick='updateQty("${dish.id}", 1)' class="w-11 h-11 flex items-center justify-center bg-zinc-900 text-white rounded-2xl shadow-sm font-black text-xl">+</button>
+                </div>
+            `;
         }
 
-        function proceedToCheckout() {
-            const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2);
-            alert(`Order Sent to Kitchen!\nTable: ${tableNumber}\nTotal: £${total}\n\nOur waiter will be with you shortly.`);
+        function addToCart(dish) {
+            cart[dish.id] = { ...dish, qty: 1 };
+            updateCartUI();
+            renderMenu();
+        }
+
+        function updateQty(id, change) {
+            cart[id].qty += change;
+            if (cart[id].qty <= 0) delete cart[id];
+            updateCartUI();
+            renderMenu();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items-list');
+            list.innerHTML = '';
+            let total = 0, count = 0;
+
+            Object.values(cart).forEach(item => {
+                total += item.qty * parseFloat(item.price);
+                count += item.qty;
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-zinc-50 p-5 rounded-[2rem] border border-zinc-100";
+                div.innerHTML = `
+                    <div>
+                        <p class="font-black italic text-md uppercase leading-none">${item.name} <span class="text-orange-500 ml-1">x${item.qty}</span></p>
+                        <p class="text-xs font-bold text-zinc-400 mt-1 uppercase">£${(item.qty * parseFloat(item.price)).toFixed(2)}</p>
+                    </div>
+                    <button onclick='updateQty("${item.id}", -${item.qty})' class="text-red-500 font-black text-[10px] uppercase tracking-widest bg-white px-4 py-2 rounded-xl shadow-sm">Remove</button>
+                `;
+                list.appendChild(div);
+            });
+
+            document.getElementById('peek-count').innerText = count;
+            document.getElementById('cart-total-sheet').innerText = `£${total.toFixed(2)}`;
+            document.getElementById('cart-peek').classList.toggle('hidden', count === 0);
+        }
+
+        function toggleCart() {
+            document.getElementById('cart-sheet').classList.toggle('cart-open');
+            document.getElementById('cart-overlay').classList.toggle('hidden');
+        }
+
+        function sendOrder() {
+            alert(`SUCCESS!\nTable: ${table}\nYour order has been sent to the kitchen.\n\nEnjoy your meal!`);
+            cart = {}; updateCartUI(); toggleCart(); renderMenu();
         }
 
         init();
     </script>
 </body>
-</html> 
+</html>

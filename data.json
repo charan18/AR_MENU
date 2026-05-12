@@ -1,10 +1,13 @@
 {
   "restaurant": "The Smart AR Cafe",
+  "hero_image": "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800",
   "currency": "£",
+  "categories": ["Mains", "Sides", "Desserts"],
   "dishes": [
     {
       "id": "dish_1",
       "name": "Wagyu Burger",
+      "category": "Mains",
       "price": "14.50",
       "calories": "820 kcal",
       "protein": "34g",
@@ -16,6 +19,7 @@
     {
       "id": "dish_2",
       "name": "Pepperoni Pizza",
+      "category": "Mains",
       "price": "12.00",
       "calories": "950 kcal",
       "protein": "28g",
@@ -27,6 +31,7 @@
     {
       "id": "dish_3",
       "name": "Chocolate Croissant",
+      "category": "Desserts",
       "price": "4.50",
       "calories": "350 kcal",
       "protein": "6g",
@@ -38,6 +43,7 @@
     {
       "id": "dish_4",
       "name": "Orange",
+      "category": "Sides",
       "price": "1.00",
       "calories": "450 kcal",
       "protein": "7g",
