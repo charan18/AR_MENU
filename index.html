@@ -12,7 +12,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .active-tab { background: #f97316; color: white; border-color: #f97316; }
         
-        /* Hide AR elements completely until explicitly requested */
         #ar-container {
             display: none;
             position: fixed;
@@ -37,7 +36,7 @@
 </head>
 <body class="bg-zinc-950 text-zinc-100 font-sans antialiased overflow-x-hidden">
 
-    <!-- ==================== LAYER 1: CLEAN DIGITAL MENU SYSTEM ==================== -->
+    <!-- ==================== LAYER 1: DIGITAL MENU SYSTEM ==================== -->
     <div id="menu-page" class="min-h-screen flex flex-col justify-between p-6 pb-24">
         <div>
             <!-- Header -->
@@ -59,7 +58,7 @@
             </div>
         </div>
 
-        <!-- Floating Bottom Checkout (Always Visible on Web Menu) -->
+        <!-- Floating Bottom Checkout -->
         <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900 p-4 rounded-3xl flex justify-between items-center shadow-2xl border border-white/5 z-40">
             <div>
                 <p id="selected-item-name" class="text-xs font-black tracking-wider text-zinc-400 uppercase">Select an item</p>
@@ -72,7 +71,7 @@
     </div>
 
 
-    <!-- ==================== LAYER 2: CONDITIONAL AR VIEWPORT OVERLAY ==================== -->
+    <!-- ==================== LAYER 2: AR VIEWPORT OVERLAY ==================== -->
     <div id="ar-container">
         
         <!-- AR HUD Controls -->
@@ -93,7 +92,7 @@
             </p>
         </div>
 
-        <!-- Hidden A-Frame Stage Engine -->
+        <!-- A-Frame Stage Engine -->
         <a-scene 
             mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiScanning: no;" 
             embedded 
@@ -103,20 +102,26 @@
             vr-mode-ui="enabled: false" 
             device-orientation-permission-ui="enabled: false">
             
+            <!-- Asset Pipeline System: Prevents dynamic injection failures -->
+            <a-assets>
+                <a-asset-item id="dish-asset-1" src=""></a-asset-item>
+                <a-asset-item id="dish-asset-2" src=""></a-asset-item>
+            </a-assets>
+            
             <a-light type="ambient" intensity="1.5"></a-light>
             <a-light type="directional" position="1 2 1" intensity="1.5"></a-light>
             <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-            <!-- Table 1 Dynamic Receiver -->
+            <!-- Table 1 Dynamic Target Anchor -->
             <a-entity mindar-image-target="targetIndex: 0" id="table-1-anchor">
-                <a-gltf-model id="ar-model-t1" src="" rotation="0 0 0" position="0 0 0.1"
+                <a-gltf-model id="ar-model-t1" src="#dish-asset-1" rotation="0 0 0" position="0 0 0" scale="1 1 1"
                     animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
                 </a-gltf-model>
             </a-entity>
 
-            <!-- Table 2 Dynamic Receiver -->
+            <!-- Table 2 Dynamic Target Anchor -->
             <a-entity mindar-image-target="targetIndex: 1" id="table-2-anchor">
-                <a-gltf-model id="ar-model-t2" src="" rotation="0 0 0" position="0 0 0.1"
+                <a-gltf-model id="ar-model-t2" src="#dish-asset-2" rotation="0 0 0" position="0 0 0" scale="1 1 1"
                     animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
                 </a-gltf-model>
             </a-entity>
@@ -147,7 +152,7 @@
                     renderItems();
                 }
             } catch (error) {
-                console.error("Error reading your configuration database:", error);
+                console.error("Database initialization error:", error);
             }
         }
 
@@ -185,7 +190,7 @@
                         <p class="font-black text-orange-400 text-base mt-2">${menuData.currency || '£'}${dish.price}</p>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <button onclick="launchAR('${dish.id}'); event.stopPropagation();" class="bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-wider border border-zinc-700 transition-all flex items-center justify-center gap-1">
+                        <button onclick="launchAR('${dish.id}'); event.stopPropagation();" class="bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-wider border border-zinc-700 transition-all">
                             👁 View AR
                         </button>
                     </div>
@@ -202,20 +207,6 @@
             });
         }
 
-        // Setup matrix translation correction mapping listeners
-        function applyCenteringDiagnostics(modelElement) {
-            modelElement.addEventListener('model-loaded', () => {
-                const mesh = modelElement.getObject3D('mesh');
-                if (mesh) {
-                    const box = new THREE.Box3().setFromObject(mesh);
-                    const center = new THREE.Vector3();
-                    box.getCenter(center);
-                    mesh.position.sub(center); // Subtraction centers asset back onto vector origin coordinates
-                    console.log(`Diagnostic system centered asset successfully: ${modelElement.id}`);
-                }
-            });
-        }
-
         // --- AR CONTROLLERS ---
         function launchAR(dishId) {
             const dish = menuData.dishes.find(d => d.id === dishId);
@@ -226,27 +217,32 @@
             document.getElementById('selected-item-price').innerText = `${menuData.currency || '£'}${dish.price}`;
             document.getElementById('ar-hud-title').innerText = dish.name;
 
+            // Direct mapping into the raw pre-baked assets cache
+            const asset1 = document.getElementById('dish-asset-1');
+            const asset2 = document.getElementById('dish-asset-2');
+            asset1.setAttribute('src', dish.glb);
+            asset2.setAttribute('src', dish.glb);
+
+            // Interface shift
             document.getElementById('ar-container').style.display = 'block';
             document.getElementById('menu-page').style.display = 'none';
 
+            // Start tracker with a microscopic timeout to let A-Frame digest the asset payload mapping
             setTimeout(() => {
                 const modelT1 = document.getElementById('ar-model-t1');
                 const modelT2 = document.getElementById('ar-model-t2');
                 
-                // Initialize standard bounding translation fixes
-                applyCenteringDiagnostics(modelT1);
-                applyCenteringDiagnostics(modelT2);
-
-                modelT1.setAttribute('src', dish.glb);
-                modelT2.setAttribute('src', dish.glb);
-
-                // Diagnostic Override: Set massive scale factor to pinpoint position flaws
-                modelT1.setAttribute('scale', "10 10 10");
-                modelT2.setAttribute('scale', "10 10 10");
+                // Set scale to a highly visible base value
+                modelT1.setAttribute('scale', "2 2 2");
+                modelT2.setAttribute('scale', "2 2 2");
+                
+                // Force load trigger
+                modelT1.flushToDOM();
+                modelT2.flushToDOM();
 
                 const sceneEl = document.querySelector('a-scene');
                 sceneEl.systems['mindar-image-system'].start();
-            }, 50);
+            }, 100);
         }
 
         function closeAR() {
@@ -266,16 +262,10 @@
         // Anchor Interaction Event Receivers
         const overlay = document.getElementById('scanning-overlay');
 
-        document.querySelector('#table-1-anchor').addEventListener("targetFound", () => {
-            overlay.style.display = 'none';
-            currentTable = "Table 01";
-        });
+        document.querySelector('#table-1-anchor').addEventListener("targetFound", () => { overlay.style.display = 'none'; });
         document.querySelector('#table-1-anchor').addEventListener("targetLost", () => { overlay.style.display = 'flex'; });
 
-        document.querySelector('#table-2-anchor').addEventListener("targetFound", () => {
-            overlay.style.display = 'none';
-            currentTable = "Table 02";
-        });
+        document.querySelector('#table-2-anchor').addEventListener("targetFound", () => { overlay.style.display = 'none'; });
         document.querySelector('#table-2-anchor').addEventListener("targetLost", () => { overlay.style.display = 'flex'; });
 
         document.getElementById('order-btn').addEventListener('click', () => {
