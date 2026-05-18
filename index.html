@@ -2,256 +2,252 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart AR Menu | Pro Edition</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Smart AR Menu</title>
+    <!-- Core Frameworks: A-Frame & MindAR -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <!-- Tailwind CSS for smooth modern UI styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        model-viewer::part(default-ar-button) { display: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .active-tab { background: #f97316; color: white; border-color: #f97316; }
-        .cart-open { transform: translateY(0) !important; }
-        
-        /* The Alignment Guide */
-        #ar-guidance {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.8);
-            pointer-events: none;
-            transition: opacity 0.5s ease;
+        #scanning-overlay {
+            position: fixed; inset: 0; z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.6); pointer-events: none;
+            transition: opacity 0.3s ease;
         }
-
-        .qr-frame {
-            width: 220px;
-            height: 220px;
-            border: 4px dashed #f97316;
-            border-radius: 24px;
-            position: relative;
+        .scanner-box {
+            width: 260px; height: 260px;
+            border: 4px dashed #f97316; border-radius: 28px;
             animation: pulse 2s infinite;
         }
-
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.04); opacity: 1; }
         }
     </style>
 </head>
-<body class="bg-zinc-50 text-zinc-900 font-sans antialiased overflow-x-hidden">
+<body class="bg-zinc-900 text-zinc-100 font-sans antialiased overflow-x-hidden">
 
-    <!-- AR ALIGNMENT GUIDE -->
-    <div id="ar-guidance">
-        <div class="qr-frame"></div>
-        <p class="text-white text-center mt-8 px-10 text-sm font-black leading-relaxed tracking-tight">
-            ALIGN BOX WITH THE <span class="text-orange-500">TABLE QR</span><br>
-            FOR INSTANT 3D PLACEMENT
+    <!-- FRONTEND SCANNING GUIDE -->
+    <div id="scanning-overlay">
+        <div class="scanner-box"></div>
+        <p class="text-white text-center mt-6 px-8 text-sm font-black tracking-tight drop-shadow">
+            POINT CAMERA DIRECTLY AT<br>THE <span class="text-orange-500">TABLE QR CODE</span>
         </p>
     </div>
 
-    <!-- HEADER & HERO -->
-    <header class="relative h-56 w-full bg-zinc-900 overflow-hidden">
-        <img id="hero-img" src="" class="w-full h-full object-cover opacity-40">
-        <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent"></div>
-        <div class="absolute bottom-6 left-6">
-            <h1 id="res-name" class="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">LOADING...</h1>
-            <div id="table-label" class="inline-block mt-2 bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Table TBD</div>
-        </div>
-    </header>
+    <!-- FLOATING INTERACTIVE UI -->
+    <div id="ui-layer" class="relative z-50 pointer-events-none min-h-screen flex flex-col justify-between">
+        
+        <!-- Header: Dynamic Restaurant Title & Table ID -->
+        <header class="p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-auto">
+            <h1 id="restaurant-title" class="text-2xl font-black italic tracking-tighter text-white uppercase">Loading...</h1>
+            <p id="table-label" class="text-xs font-bold text-orange-500 uppercase tracking-widest mt-1">Scanning Table QR...</p>
+        </header>
 
-    <!-- CATEGORY NAVIGATION -->
-    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-zinc-100 py-4">
-        <div id="category-bar" class="flex gap-2 overflow-x-auto px-6 no-scrollbar"></div>
-    </nav>
-
-    <!-- MENU GRID -->
-    <main class="p-6 pb-40 max-w-md mx-auto">
-        <div id="menu-container" class="grid grid-cols-1 gap-12"></div>
-    </main>
-
-    <!-- CART SHEET (ZOMATO STYLE) -->
-    <div id="cart-overlay" class="fixed inset-0 bg-black/60 z-[200] hidden backdrop-blur-sm transition-opacity" onclick="toggleCart()"></div>
-    
-    <div id="cart-sheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-[3rem] z-[300] transform translate-y-full transition-transform duration-500 ease-in-out shadow-2xl max-w-md mx-auto h-[75vh] flex flex-col">
-        <div class="p-8 flex-1 overflow-y-auto">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-black italic tracking-tighter">MY ORDER</h2>
-                <button onclick="toggleCart()" class="bg-zinc-100 p-2 rounded-full">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
+        <!-- Main Body Content: Dynamic Menu Swapper -->
+        <div class="mt-auto pointer-events-auto w-full bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pb-8 pt-20">
+            
+            <!-- Category Navigation Tab Bar -->
+            <nav id="category-bar" class="px-6 py-2 overflow-x-auto flex gap-2 no-scrollbar mb-4">
+                <!-- Injected dynamically via JS -->
+            </nav>
+            
+            <!-- Horizontal Carousel for Menu Items inside active category -->
+            <div id="items-carousel" class="px-6 flex gap-4 overflow-x-auto no-scrollbar pb-4 snap-x snap-mandatory">
+                <!-- Injected dynamically via JS -->
             </div>
             
-            <div id="cart-items-list" class="space-y-6"></div>
-
-            <div class="mt-10">
-                <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Special Instructions</label>
-                <textarea id="order-comments" placeholder="Add extra sauce, allergies, etc..." class="w-full mt-2 p-5 bg-zinc-100 rounded-[2rem] text-sm outline-none focus:ring-2 focus:ring-orange-500 min-h-[120px]"></textarea>
+            <!-- Bottom Checkout Control Panel -->
+            <div class="px-6 max-w-md mx-auto">
+                <div class="bg-zinc-900/90 backdrop-blur p-4 rounded-3xl flex justify-between items-center shadow-2xl border border-white/5">
+                    <div>
+                        <p id="selected-item-name" class="text-xs font-black tracking-wider text-zinc-400 uppercase">Select an item</p>
+                        <p id="selected-item-price" class="text-white font-black text-xl">--</p>
+                    </div>
+                    <button id="order-btn" class="bg-orange-500 hover:bg-orange-600 transition-colors text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20">
+                        Order Now
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <div class="p-8 bg-zinc-50 border-t border-zinc-100 rounded-t-[3rem]">
-            <div class="flex justify-between items-center mb-6">
-                <span class="font-bold text-zinc-400 uppercase text-xs tracking-widest">Total Amount</span>
-                <span id="cart-total-sheet" class="font-black text-3xl italic tracking-tighter">£0.00</span>
-            </div>
-            <button onclick="sendOrder()" class="w-full bg-zinc-900 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform">
-                Confirm Order
-            </button>
         </div>
     </div>
 
-    <!-- BOTTOM FLOATING PEEK -->
-    <div id="cart-peek" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900 text-white rounded-full p-2 pl-8 shadow-2xl flex justify-between items-center z-[100] border border-white/10">
-        <div class="flex items-center gap-2">
-            <span id="peek-count" class="text-orange-500 font-black italic text-xl">0</span>
-            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Items</span>
-        </div>
-        <button onclick="toggleCart()" class="bg-orange-500 text-white px-10 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all">
-            Review Order
-        </button>
-    </div>
+    <!-- AR VIEWPORT LAYER -->
+    <a-scene 
+        mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: no;" 
+        embedded 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights: true" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
+        
+        <!-- Simple ambient lighting setup for accurate food rendering inside dark/tight contexts -->
+        <a-light type="ambient" intensity="1.2"></a-light>
+        <a-light type="directional" position="1 2 1" intensity="1.5"></a-light>
 
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <!-- TABLE 1 VIRTUAL ANCHOR (Target 0) -->
+        <a-entity mindar-image-target="targetIndex: 0" id="table-1-anchor">
+            <a-gltf-model id="ar-model-t1" src="" rotation="0 0 0" position="0 0 0" scale="1 1 1"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
+            </a-gltf-model>
+        </a-entity>
+
+        <!-- TABLE 2 VIRTUAL ANCHOR (Target 1) -->
+        <a-entity mindar-image-target="targetIndex: 1" id="table-2-anchor">
+            <a-gltf-model id="ar-model-t2" src="" rotation="0 0 0" position="0 0 0" scale="1 1 1"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
+            </a-gltf-model>
+        </a-entity>
+    </a-scene>
+
+    <!-- SYSTEM LOGIC ENGINE -->
     <script>
         let menuData = null;
-        let activeCategory = "All";
-        let cart = {};
-        const table = new URLSearchParams(window.location.search).get('table') || "01";
+        let activeCategory = "";
+        let selectedItem = null;
+        let currentTable = null;
 
-        async function init() {
+        const overlay = document.getElementById('scanning-overlay');
+        const tableLabel = document.getElementById('table-label');
+        const modelT1 = document.getElementById('ar-model-t1');
+        const modelT2 = document.getElementById('ar-model-t2');
+
+        // 1. Core Fetch: Initialize and build UI out of data.json
+        async function initMenu() {
             try {
-                const res = await fetch('data.json');
-                menuData = await res.json();
+                const response = await fetch('./data.json');
+                menuData = await response.json();
                 
-                document.getElementById('res-name').innerText = menuData.restaurant;
-                document.getElementById('hero-img').src = menuData.hero_image;
-                document.getElementById('table-label').innerText = `Table ${table}`;
-
-                renderCategories();
-                renderMenu();
-            } catch (e) { console.error("JSON Load Error", e); }
+                document.getElementById('restaurant-title').innerText = menuData.restaurant;
+                
+                // Establish initial dynamic Category Tabs
+                if (menuData.categories && menuData.categories.length > 0) {
+                    activeCategory = menuData.categories[0];
+                    renderCategories();
+                    renderItems();
+                }
+            } catch (error) {
+                console.error("Error reading your data.json menu configuration:", error);
+            }
         }
 
         function renderCategories() {
             const bar = document.getElementById('category-bar');
-            bar.innerHTML = '';
-            const allCats = ["All", ...menuData.categories];
-            allCats.forEach(cat => {
+            bar.innerHTML = "";
+            menuData.categories.forEach(cat => {
                 const btn = document.createElement('button');
-                btn.className = `px-6 py-2.5 rounded-2xl border text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${activeCategory === cat ? 'active-tab shadow-md' : 'bg-white text-zinc-400 border-zinc-200'}`;
-                btn.innerText = cat.toUpperCase();
-                btn.onclick = () => { activeCategory = cat; renderCategories(); renderMenu(); };
+                btn.className = `px-5 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all duration-200 shrink-0 ${cat === activeCategory ? 'active-tab shadow-lg shadow-orange-500/20' : 'bg-zinc-800/80 border border-zinc-700/50 text-zinc-400'}`;
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    activeCategory = cat;
+                    renderCategories();
+                    renderItems();
+                };
                 bar.appendChild(btn);
             });
         }
 
-        function renderMenu() {
-            const container = document.getElementById('menu-container');
-            container.innerHTML = '';
-            const filtered = activeCategory === "All" ? menuData.dishes : menuData.dishes.filter(d => d.category === activeCategory);
-
-            filtered.forEach((dish) => {
-                const qty = cart[dish.id]?.qty || 0;
+        function renderItems() {
+            const carousel = document.getElementById('items-carousel');
+            carousel.innerHTML = "";
+            
+            // Filter dishes mapped strictly to selection
+            const filteredDishes = menuData.dishes.filter(dish => dish.category === activeCategory);
+            
+            filteredDishes.forEach((dish, idx) => {
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-[3rem] p-3 border border-zinc-100 shadow-sm transition-all";
+                card.className = "snap-center shrink-0 w-44 bg-zinc-900/90 border border-zinc-800 p-4 rounded-2xl flex flex-col justify-between shadow-xl cursor-pointer transition-all";
+                if(selectedItem && selectedItem.id === dish.id) {
+                    card.classList.add("border-orange-500", "bg-zinc-800");
+                }
+                
                 card.innerHTML = `
-                    <div class="relative h-72 rounded-[2.5rem] overflow-hidden bg-zinc-50 border border-zinc-50">
-                        <model-viewer src="${dish.glb}" ios-src="${dish.usdz}" ar ar-placement="floor" ar-scale="fixed" camera-controls touch-action="pan-y" 
-                        loading="eager" environment-image="neutral" shadow-intensity="2" class="w-full h-full">
-                            <button slot="ar-button" class="absolute bottom-5 right-5 bg-white p-5 rounded-full shadow-2xl border border-zinc-100">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                            </button>
-                        </model-viewer>
-                        <div class="absolute top-5 left-5 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
-                            <span class="text-white text-[9px] font-black uppercase tracking-tighter italic">Life Size 1:1</span>
-                        </div>
-                    </div>
-                    <div class="p-6 flex justify-between items-center">
-                        <div>
-                            <h3 class="text-2xl font-black italic tracking-tighter uppercase leading-none mb-1">${dish.name}</h3>
-                            <p class="text-orange-500 font-black text-xl italic leading-none">£${dish.price}</p>
-                        </div>
-                        <div id="ui-${dish.id}">
-                            ${qty > 0 ? renderQtyUI(dish) : `<button onclick='addToCart(${JSON.stringify(dish)})' class="bg-zinc-900 text-white px-10 py-4 rounded-[1.5rem] font-black text-[10px] tracking-widest active:scale-95 transition-all">ADD</button>`}
-                        </div>
-                    </div>
-                `;
-
-                // Logic for Alignment Guide
-                const viewer = card.querySelector('model-viewer');
-                viewer.addEventListener('ar-status', (e) => {
-                    const guide = document.getElementById('ar-guidance');
-                    if (e.detail.status === 'session-started') {
-                        guide.style.display = 'flex';
-                        setTimeout(() => { guide.style.opacity = '0'; setTimeout(() => guide.style.display = 'none', 500); }, 4000);
-                    } else { guide.style.display = 'none'; guide.style.opacity = '1'; }
-                });
-
-                container.appendChild(card);
-            });
-        }
-
-        function renderQtyUI(dish) {
-            return `
-                <div class="flex items-center gap-5 bg-zinc-100 p-1.5 rounded-[1.5rem] border border-zinc-200">
-                    <button onclick='updateQty("${dish.id}", -1)' class="w-11 h-11 flex items-center justify-center bg-white rounded-2xl shadow-sm font-black text-xl">-</button>
-                    <span class="font-black italic text-xl w-4 text-center">${cart[dish.id].qty}</span>
-                    <button onclick='updateQty("${dish.id}", 1)' class="w-11 h-11 flex items-center justify-center bg-zinc-900 text-white rounded-2xl shadow-sm font-black text-xl">+</button>
-                </div>
-            `;
-        }
-
-        function addToCart(dish) {
-            cart[dish.id] = { ...dish, qty: 1 };
-            updateCartUI();
-            renderMenu();
-        }
-
-        function updateQty(id, change) {
-            cart[id].qty += change;
-            if (cart[id].qty <= 0) delete cart[id];
-            updateCartUI();
-            renderMenu();
-        }
-
-        function updateCartUI() {
-            const list = document.getElementById('cart-items-list');
-            list.innerHTML = '';
-            let total = 0, count = 0;
-
-            Object.values(cart).forEach(item => {
-                total += item.qty * parseFloat(item.price);
-                count += item.qty;
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-zinc-50 p-5 rounded-[2rem] border border-zinc-100";
-                div.innerHTML = `
                     <div>
-                        <p class="font-black italic text-md uppercase leading-none">${item.name} <span class="text-orange-500 ml-1">x${item.qty}</span></p>
-                        <p class="text-xs font-bold text-zinc-400 mt-1 uppercase">£${(item.qty * parseFloat(item.price)).toFixed(2)}</p>
+                        <span class="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full ${dish.type === 'veg' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}">${dish.type.toUpperCase()}</span>
+                        <h3 class="font-black text-sm text-white mt-2 leading-tight">${dish.name}</h3>
+                        <p class="text-xs text-zinc-400 font-medium mt-1">${dish.calories || ''}</p>
                     </div>
-                    <button onclick='updateQty("${item.id}", -${item.qty})' class="text-red-500 font-black text-[10px] uppercase tracking-widest bg-white px-4 py-2 rounded-xl shadow-sm">Remove</button>
+                    <div class="mt-4 flex justify-between items-center">
+                        <span class="font-black text-orange-400 text-sm">${menuData.currency || '£'}${dish.price}</span>
+                        <span class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-1 rounded-md font-bold uppercase tracking-tight">Select</span>
+                    </div>
                 `;
-                list.appendChild(div);
+                
+                card.onclick = () => {
+                    selectDish(dish);
+                    renderItems(); // re-render layout highlight
+                };
+                carousel.appendChild(card);
+                
+                // Default select the first item on active view switch
+                if(idx === 0 && (!selectedItem || selectedItem.category !== activeCategory)) {
+                    selectDish(dish);
+                }
             });
-
-            document.getElementById('peek-count').innerText = count;
-            document.getElementById('cart-total-sheet').innerText = `£${total.toFixed(2)}`;
-            document.getElementById('cart-peek').classList.toggle('hidden', count === 0);
         }
 
-        function toggleCart() {
-            document.getElementById('cart-sheet').classList.toggle('cart-open');
-            document.getElementById('cart-overlay').classList.toggle('hidden');
+        // Sets app UI variables and swaps underlying virtual assets inside A-Frame instantly
+        function selectDish(dish) {
+            selectedItem = dish;
+            document.getElementById('selected-item-name').innerText = dish.name;
+            document.getElementById('selected-item-price').innerText = `${menuData.currency || '£'}${dish.price}`;
+            
+            // Point the targets to use your data.json specified asset
+            modelT1.setAttribute('src', dish.glb);
+            modelT2.setAttribute('src', dish.glb);
+            
+            // Handle unique spatial scale adjustments cleanly
+            const customScale = dish.name.toLowerCase().includes("burger") ? "0.5 0.5 0.5" : "0.4 0.4 0.4";
+            modelT1.setAttribute('scale', customScale);
+            modelT2.setAttribute('scale', customScale);
         }
 
-        function sendOrder() {
-            alert(`SUCCESS!\nTable: ${table}\nYour order has been sent to the kitchen.\n\nEnjoy your meal!`);
-            cart = {}; updateCartUI(); toggleCart(); renderMenu();
+        // 2. Dynamic Tracking Hooks
+        const t1Anchor = document.querySelector('#table-1-anchor');
+        t1Anchor.addEventListener("targetFound", () => {
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+            currentTable = "Table 01";
+            tableLabel.innerText = `${currentTable} • Live AR Linked`;
+        });
+        t1Anchor.addEventListener("targetLost", () => handleTargetLoss());
+
+        const t2Anchor = document.querySelector('#table-2-anchor');
+        t2Anchor.addEventListener("targetFound", () => {
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+            currentTable = "Table 02";
+            tableLabel.innerText = `${currentTable} • Live AR Linked`;
+        });
+        t2Anchor.addEventListener("targetLost", () => handleTargetLoss());
+
+        function handleTargetLoss() {
+            overlay.style.display = 'flex';
+            setTimeout(() => { overlay.style.opacity = '1'; }, 5);
+            tableLabel.innerText = "Scanning Table QR...";
+            currentTable = null;
         }
 
-        init();
+        // 3. Checkout Button Context Binding
+        document.getElementById('order-btn').addEventListener('click', () => {
+            if(!currentTable) {
+                alert("Please align your view directly over your table's QR sticker to lock system tracking data.");
+                return;
+            }
+            if(!selectedItem) return;
+            
+            alert(`Order Placed!\nDish: ${selectedItem.name}\nTable: ${currentTable}\nPrice: ${menuData.currency || '£'}${selectedItem.price}`);
+        });
+
+        // Fire on startup
+        initMenu();
     </script>
 </body>
 </html>
