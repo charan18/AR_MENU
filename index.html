@@ -3,280 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Smart AR Menu</title>
-    <!-- Core Frameworks -->
+    <title>Stable AR Test</title>
+    <!-- Core Framework Stack -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Keep viewport clean and ensure camera fills screen background */
+        body { margin: 0; overflow: hidden; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .active-tab { background: #f97316; color: white; border-color: #f97316; }
-        
-        #ar-container {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-        }
-        #scanning-overlay {
-            position: fixed; inset: 0; z-index: 110;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.6); pointer-events: none;
-        }
-        .scanner-box {
-            width: 240px; height: 240px;
-            border: 4px dashed #f97316; border-radius: 28px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.7; }
-            50% { transform: scale(1.04); opacity: 1; }
-        }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 font-sans antialiased overflow-x-hidden">
+<body class="bg-black text-white antialiased">
 
-    <!-- ==================== LAYER 1: DIGITAL MENU SYSTEM ==================== -->
-    <div id="menu-page" class="min-h-screen flex flex-col justify-between p-6 pb-24">
-        <div>
-            <!-- Header -->
-            <header class="mb-6 flex justify-between items-center">
-                <div>
-                    <h1 id="restaurant-title" class="text-2xl font-black italic tracking-tighter text-white uppercase">The Smart AR Cafe</h1>
-                    <p id="table-label" class="text-xs font-bold text-orange-500 uppercase tracking-widest mt-1">Table Menu</p>
-                </div>
-            </header>
-
-            <!-- Category Navigation Tabs -->
-            <nav id="category-bar" class="py-2 overflow-x-auto flex gap-2 no-scrollbar mb-6">
-                <!-- Dynamically Injected -->
-            </nav>
-            
-            <!-- Food List Layout -->
-            <div id="items-list" class="flex flex-col gap-4">
-                <!-- Dynamically Injected -->
-            </div>
-        </div>
-
-        <!-- Floating Bottom Checkout -->
-        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900 p-4 rounded-3xl flex justify-between items-center shadow-2xl border border-white/5 z-40">
-            <div>
-                <p id="selected-item-name" class="text-xs font-black tracking-wider text-zinc-400 uppercase">Select an item</p>
-                <p id="selected-item-price" class="text-white font-black text-xl">--</p>
-            </div>
-            <button id="order-btn" class="bg-orange-500 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg">
-                Order Now
-            </button>
-        </div>
-    </div>
-
-
-    <!-- ==================== LAYER 2: AR VIEWPORT OVERLAY ==================== -->
-    <div id="ar-container">
+    <!-- ==================== STABLE AR VIEWPORT ==================== -->
+    <!-- AutoStart is true: MindAR handles the camera initialization immediately on page load -->
+    <a-scene 
+        mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: yes;" 
+        embedded 
+        loading-screen="enabled: false"
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights: true" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
         
-        <!-- AR HUD Controls -->
-        <div class="absolute top-6 left-6 right-6 flex justify-between items-center z-[120]">
-            <span id="ar-hud-title" class="bg-black/60 backdrop-blur text-white px-4 py-2 rounded-full font-black text-xs tracking-wide">
-                --
-            </span>
-            <button onclick="closeAR()" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase px-4 py-2 rounded-full shadow-xl">
-                ✕ Close AR
-            </button>
+        <a-assets>
+            <!-- Hardcoded asset link to prevent injection timing failures -->
+            <a-asset-item id="burger-model" src="models/burger.glb"></a-asset-item>
+        </a-assets>
+        
+        <!-- Standard Cinematic Lighting -->
+        <a-light type="ambient" intensity="1.5"></a-light>
+        <a-light type="directional" position="1 2 1" intensity="1.2"></a-light>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <!-- SINGLE TARGET PROTOTYPE (Target Index 0 = Table 1) -->
+        <a-entity mindar-image-target="targetIndex: 0" id="table-target">
+            <!-- Completely static, realistic scale, slightly raised on Z axis -->
+            <a-gltf-model 
+                src="#burger-model" 
+                position="0 0 0.1" 
+                scale="0.5 0.5 0.5" 
+                rotation="0 0 0">
+            </a-gltf-model>
+        </a-entity>
+    </a-scene>
+
+    <!-- ==================== MINIMALIST TEXT OVERLAY ==================== -->
+    <div class="absolute bottom-10 left-0 right-0 mx-auto text-center z-50 pointer-events-none">
+        <div class="inline-block bg-black/80 backdrop-blur px-6 py-3 rounded-2xl border border-white/10 shadow-xl">
+            <h1 class="text-sm font-black tracking-wider uppercase text-orange-500">AR Diagnostic Mode</h1>
+            <p class="text-[11px] text-zinc-400 mt-1">Point your camera at the Table 1 QR Target Image</p>
         </div>
-
-        <!-- Aiming Guide Overlay -->
-        <div id="scanning-overlay">
-            <div class="scanner-box"></div>
-            <p class="text-white text-center mt-6 px-8 text-sm font-black tracking-tight drop-shadow">
-                ALIGN CAMERA DIRECTLY OVER<br>THE <span class="text-orange-500">TABLE QR CODE</span>
-            </p>
-        </div>
-
-        <!-- A-Frame Stage Engine -->
-        <a-scene 
-            mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiScanning: no;" 
-            embedded 
-            loading-screen="enabled: false"
-            color-space="sRGB" 
-            renderer="colorManagement: true, physicallyCorrectLights: true" 
-            vr-mode-ui="enabled: false" 
-            device-orientation-permission-ui="enabled: false">
-            
-            <!-- Asset Pipeline System: Prevents dynamic injection failures -->
-            <a-assets>
-                <a-asset-item id="dish-asset-1" src=""></a-asset-item>
-                <a-asset-item id="dish-asset-2" src=""></a-asset-item>
-            </a-assets>
-            
-            <a-light type="ambient" intensity="1.5"></a-light>
-            <a-light type="directional" position="1 2 1" intensity="1.5"></a-light>
-            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-            <!-- Table 1 Dynamic Target Anchor -->
-            <a-entity mindar-image-target="targetIndex: 0" id="table-1-anchor">
-                <a-gltf-model id="ar-model-t1" src="#dish-asset-1" rotation="0 0 0" position="0 0 0" scale="1 1 1"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
-                </a-gltf-model>
-            </a-entity>
-
-            <!-- Table 2 Dynamic Target Anchor -->
-            <a-entity mindar-image-target="targetIndex: 1" id="table-2-anchor">
-                <a-gltf-model id="ar-model-t2" src="#dish-asset-2" rotation="0 0 0" position="0 0 0" scale="1 1 1"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
-                </a-gltf-model>
-            </a-entity>
-        </a-scene>
     </div>
 
-
-    <!-- ==================== SYSTEM LOGIC DRIVER ==================== -->
-    <script>
-        let menuData = null;
-        let activeCategory = "";
-        let selectedItem = null;
-        let currentTable = null;
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const tableParam = urlParams.get('table') || '1';
-        document.getElementById('table-label').innerText = `Table 0${tableParam}`;
-
-        async function initMenu() {
-            try {
-                const response = await fetch('./data.json');
-                menuData = await response.json();
-                document.getElementById('restaurant-title').innerText = menuData.restaurant;
-                
-                if (menuData.categories && menuData.categories.length > 0) {
-                    activeCategory = menuData.categories[0];
-                    renderCategories();
-                    renderItems();
-                }
-            } catch (error) {
-                console.error("Database initialization error:", error);
-            }
-        }
-
-        function renderCategories() {
-            const bar = document.getElementById('category-bar');
-            bar.innerHTML = "";
-            menuData.categories.forEach(cat => {
-                const btn = document.createElement('button');
-                btn.className = `px-5 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase shrink-0 transition-all ${cat === activeCategory ? 'active-tab shadow-lg' : 'bg-zinc-900 border border-zinc-800 text-zinc-400'}`;
-                btn.innerText = cat;
-                btn.onclick = () => {
-                    activeCategory = cat;
-                    renderCategories();
-                    renderItems();
-                };
-                bar.appendChild(btn);
-            });
-        }
-
-        function renderItems() {
-            const listContainer = document.getElementById('items-list');
-            listContainer.innerHTML = "";
-            
-            const filtered = menuData.dishes.filter(d => d.category === activeCategory);
-            
-            filtered.forEach(dish => {
-                const row = document.createElement('div');
-                row.className = `p-4 rounded-2xl bg-zinc-900 border transition-all flex justify-between items-center ${selectedItem && selectedItem.id === dish.id ? 'border-orange-500 bg-zinc-900' : 'border-zinc-800'}`;
-                
-                row.innerHTML = `
-                    <div class="flex-1 pr-4">
-                        <span class="text-[8px] font-bold tracking-wider px-2 py-0.5 rounded-full ${dish.type === 'veg' ? 'bg-green-950 text-green-400' : 'bg-red-950 text-red-400'}">${dish.type.toUpperCase()}</span>
-                        <h3 class="font-bold text-base text-white mt-1">${dish.name}</h3>
-                        <p class="text-xs text-zinc-400 mt-0.5 font-medium">${dish.calories || ''} • Alrg: ${dish.allergens || 'None'}</p>
-                        <p class="font-black text-orange-400 text-base mt-2">${menuData.currency || '£'}${dish.price}</p>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <button onclick="launchAR('${dish.id}'); event.stopPropagation();" class="bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-wider border border-zinc-700 transition-all">
-                            👁 View AR
-                        </button>
-                    </div>
-                `;
-                
-                row.onclick = () => {
-                    selectedItem = dish;
-                    document.getElementById('selected-item-name').innerText = dish.name;
-                    document.getElementById('selected-item-price').innerText = `${menuData.currency || '£'}${dish.price}`;
-                    renderItems();
-                };
-                
-                listContainer.appendChild(row);
-            });
-        }
-
-        // --- AR CONTROLLERS ---
-        function launchAR(dishId) {
-            const dish = menuData.dishes.find(d => d.id === dishId);
-            if(!dish) return;
-
-            selectedItem = dish;
-            document.getElementById('selected-item-name').innerText = dish.name;
-            document.getElementById('selected-item-price').innerText = `${menuData.currency || '£'}${dish.price}`;
-            document.getElementById('ar-hud-title').innerText = dish.name;
-
-            // Direct mapping into the raw pre-baked assets cache
-            const asset1 = document.getElementById('dish-asset-1');
-            const asset2 = document.getElementById('dish-asset-2');
-            asset1.setAttribute('src', dish.glb);
-            asset2.setAttribute('src', dish.glb);
-
-            // Interface shift
-            document.getElementById('ar-container').style.display = 'block';
-            document.getElementById('menu-page').style.display = 'none';
-
-            // Start tracker with a microscopic timeout to let A-Frame digest the asset payload mapping
-            setTimeout(() => {
-                const modelT1 = document.getElementById('ar-model-t1');
-                const modelT2 = document.getElementById('ar-model-t2');
-                
-                // Set scale to a highly visible base value
-                modelT1.setAttribute('scale', "2 2 2");
-                modelT2.setAttribute('scale', "2 2 2");
-                
-                // Force load trigger
-                modelT1.flushToDOM();
-                modelT2.flushToDOM();
-
-                const sceneEl = document.querySelector('a-scene');
-                sceneEl.systems['mindar-image-system'].start();
-            }, 100);
-        }
-
-        function closeAR() {
-            const sceneEl = document.querySelector('a-scene');
-            sceneEl.systems['mindar-image-system'].stop();
-
-            document.getElementById('ar-container').style.display = 'none';
-            document.getElementById('menu-page').style.display = 'flex';
-            document.getElementById('scanning-overlay').style.display = 'flex';
-            
-            const videoTracks = document.querySelectorAll('video');
-            videoTracks.forEach(v => v.remove());
-            
-            renderItems();
-        }
-
-        // Anchor Interaction Event Receivers
-        const overlay = document.getElementById('scanning-overlay');
-
-        document.querySelector('#table-1-anchor').addEventListener("targetFound", () => { overlay.style.display = 'none'; });
-        document.querySelector('#table-1-anchor').addEventListener("targetLost", () => { overlay.style.display = 'flex'; });
-
-        document.querySelector('#table-2-anchor').addEventListener("targetFound", () => { overlay.style.display = 'none'; });
-        document.querySelector('#table-2-anchor').addEventListener("targetLost", () => { overlay.style.display = 'flex'; });
-
-        document.getElementById('order-btn').addEventListener('click', () => {
-            if(!selectedItem) {
-                alert("Please pick an item from the menu first!");
-                return;
-            }
-            alert(`Order Sent!\nItem: ${selectedItem.name}\nTable: Table 0${tableParam}\nTotal: ${menuData.currency || '£'}${selectedItem.price}`);
-        });
-
-        initMenu();
-    </script>
 </body>
 </html>
