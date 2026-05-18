@@ -12,7 +12,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .active-tab { background: #f97316; color: white; border-color: #f97316; }
         
-        /* Hide AR elements completely until requested */
+        /* Hide AR elements completely until explicitly requested */
         #ar-container {
             display: none;
             position: fixed;
@@ -27,6 +27,11 @@
         .scanner-box {
             width: 240px; height: 240px;
             border: 4px dashed #f97316; border-radius: 28px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.04); opacity: 1; }
         }
     </style>
 </head>
@@ -38,7 +43,7 @@
             <!-- Header -->
             <header class="mb-6 flex justify-between items-center">
                 <div>
-                    <h1 id="restaurant-title" class="text-2xl font-black italic tracking-tighter text-white uppercase">Loading...</h1>
+                    <h1 id="restaurant-title" class="text-2xl font-black italic tracking-tighter text-white uppercase">The Smart AR Cafe</h1>
                     <p id="table-label" class="text-xs font-bold text-orange-500 uppercase tracking-widest mt-1">Table Menu</p>
                 </div>
             </header>
@@ -73,7 +78,7 @@
         <!-- AR HUD Controls -->
         <div class="absolute top-6 left-6 right-6 flex justify-between items-center z-[120]">
             <span id="ar-hud-title" class="bg-black/60 backdrop-blur text-white px-4 py-2 rounded-full font-black text-xs tracking-wide">
-                Wagyu Burger
+                --
             </span>
             <!-- Close Camera View Button -->
             <button onclick="closeAR()" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase px-4 py-2 rounded-full shadow-xl">
@@ -93,25 +98,26 @@
         <a-scene 
             mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiScanning: no;" 
             embedded 
+            loading-screen="enabled: false"
             color-space="sRGB" 
             renderer="colorManagement: true, physicallyCorrectLights: true" 
             vr-mode-ui="enabled: false" 
             device-orientation-permission-ui="enabled: false">
             
-            <a-light type="ambient" intensity="1.2"></a-light>
+            <a-light type="ambient" intensity="1.5"></a-light>
             <a-light type="directional" position="1 2 1" intensity="1.5"></a-light>
             <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
             <!-- Table 1 Dynamic Receiver -->
             <a-entity mindar-image-target="targetIndex: 0" id="table-1-anchor">
-                <a-gltf-model id="ar-model-t1" src="" rotation="0 0 0" position="0 0 0" scale="0.5 0.5 0.5"
+                <a-gltf-model id="ar-model-t1" src="" rotation="0 0 0" position="0 0 0.1" scale="1 1 1"
                     animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
                 </a-gltf-model>
             </a-entity>
 
             <!-- Table 2 Dynamic Receiver -->
             <a-entity mindar-image-target="targetIndex: 1" id="table-2-anchor">
-                <a-gltf-model id="ar-model-t2" src="" rotation="0 0 0" position="0 0 0" scale="0.5 0.5 0.5"
+                <a-gltf-model id="ar-model-t2" src="" rotation="0 0 0" position="0 0 0.1" scale="1 1 1"
                     animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; ease: linear">
                 </a-gltf-model>
             </a-entity>
@@ -128,7 +134,7 @@
 
         // Parse Table Query Parameter (?table=1) from the initial QR scan
         const urlParams = new URLSearchParams(window.location.search);
-        const tableParam = urlParams.get('table') || '01';
+        const tableParam = urlParams.get('table') || '1';
         document.getElementById('table-label').innerText = `Table 0${tableParam}`;
 
         // Initialize and fetch the JSON structure
@@ -175,14 +181,13 @@
                 row.className = `p-4 rounded-2xl bg-zinc-900 border transition-all flex justify-between items-center ${selectedItem && selectedItem.id === dish.id ? 'border-orange-500 bg-zinc-900' : 'border-zinc-800'}`;
                 
                 row.innerHTML = `
-                    <div class="flex-1pr-4">
+                    <div class="flex-1 pr-4">
                         <span class="text-[8px] font-bold tracking-wider px-2 py-0.5 rounded-full ${dish.type === 'veg' ? 'bg-green-950 text-green-400' : 'bg-red-950 text-red-400'}">${dish.type.toUpperCase()}</span>
                         <h3 class="font-bold text-base text-white mt-1">${dish.name}</h3>
                         <p class="text-xs text-zinc-400 mt-0.5 font-medium">${dish.calories || ''} • Alrg: ${dish.allergens || 'None'}</p>
                         <p class="font-black text-orange-400 text-base mt-2">${menuData.currency || '£'}${dish.price}</p>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <!-- Button targeting AR Viewport activation -->
                         <button onclick="launchAR('${dish.id}'); event.stopPropagation();" class="bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-wider border border-zinc-700 transition-all flex items-center justify-center gap-1">
                             👁 View AR
                         </button>
@@ -205,23 +210,31 @@
             const dish = menuData.dishes.find(d => d.id === dishId);
             if(!dish) return;
 
-            // Update checkout details block contexts
             selectedItem = dish;
             document.getElementById('selected-item-name').innerText = dish.name;
             document.getElementById('selected-item-price').innerText = `${menuData.currency || '£'}${dish.price}`;
             document.getElementById('ar-hud-title').innerText = dish.name;
 
-            // Set the GLB asset to use inside the virtual elements
-            document.getElementById('ar-model-t1').setAttribute('src', dish.glb);
-            document.getElementById('ar-model-t2').setAttribute('src', dish.glb);
-
             // Open full window modal UI container 
             document.getElementById('ar-container').style.display = 'block';
             document.getElementById('menu-page').style.display = 'none';
 
-            // Programmatically kick-start the camera tracking layer
-            const sceneEl = document.querySelector('a-scene');
-            sceneEl.systems['mindar-image-system'].start();
+            // Wait a fraction of a second for the canvas DOM element to map before pushing paths
+            setTimeout(() => {
+                const modelT1 = document.getElementById('ar-model-t1');
+                const modelT2 = document.getElementById('ar-model-t2');
+                
+                modelT1.setAttribute('src', dish.glb);
+                modelT2.setAttribute('src', dish.glb);
+
+                // Default base scale for checking visibility
+                modelT1.setAttribute('scale', "1 1 1");
+                modelT2.setAttribute('scale', "1 1 1");
+
+                // Programmatically boot up the tracker engine
+                const sceneEl = document.querySelector('a-scene');
+                sceneEl.systems['mindar-image-system'].start();
+            }, 50);
         }
 
         function closeAR() {
@@ -234,7 +247,7 @@
             document.getElementById('menu-page').style.display = 'flex';
             document.getElementById('scanning-overlay').style.display = 'flex';
             
-            // Clean out the background camera tracks left in DOM by MindAR
+            // Clean out old camera elements injected into the root body by MindAR
             const videoTracks = document.querySelectorAll('video');
             videoTracks.forEach(v => v.remove());
             
@@ -259,10 +272,10 @@
         // Checkout Button logic execution
         document.getElementById('order-btn').addEventListener('click', () => {
             if(!selectedItem) {
-                alert("Please pick a delicious item from the menu first!");
+                alert("Please pick an item from the menu first!");
                 return;
             }
-            alert(`Order Sent!\nItem: ${selectedItem.name}\nTable Target Route: Table 0${tableParam}\nTotal: ${menuData.currency || '£'}${selectedItem.price}`);
+            alert(`Order Sent!\nItem: ${selectedItem.name}\nTable: Table 0${tableParam}\nTotal: ${menuData.currency || '£'}${selectedItem.price}`);
         });
 
         // Run application on load
